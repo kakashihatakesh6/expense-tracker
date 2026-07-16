@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { Platform } from 'react-native';
 
 const lookup = new Uint8Array(256);
@@ -44,24 +45,40 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
 export const storageService = {
   /**
    * Uploads an image file to Supabase receipts bucket.
-   * Handles both local file URIs (Android/iOS) and web data/http URIs.
+   * Compresses the image natively first if possible.
    */
   async uploadReceipt(fileUri: string, userId: string): Promise<string> {
     if (!fileUri) throw new Error('File URI is required for upload');
 
+    let processedUri = fileUri;
+
+    // Compressing native images before upload
+    if (Platform.OS !== 'web' && !fileUri.startsWith('data:') && !fileUri.startsWith('http')) {
+      try {
+        const manipulateResult = await ImageManipulator.manipulateAsync(
+          fileUri,
+          [{ resize: { width: 1000 } }], // Resize down to 1000px width limit
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        processedUri = manipulateResult.uri;
+      } catch (compressError) {
+        console.warn('Failed to compress image before upload, using original:', compressError);
+      }
+    }
+
     // 1. Generate a unique filename under user's directory
-    const fileExt = fileUri.split('.').pop()?.toLowerCase() || 'jpg';
+    const fileExt = processedUri.split('.').pop()?.toLowerCase() || 'jpg';
     const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     const contentType = fileExt === 'png' ? 'image/png' : 'image/jpeg';
 
     let fileBody: ArrayBuffer | Blob;
 
-    if (Platform.OS === 'web' || fileUri.startsWith('data:') || fileUri.startsWith('http')) {
-      const response = await fetch(fileUri);
+    if (Platform.OS === 'web' || processedUri.startsWith('data:') || processedUri.startsWith('http')) {
+      const response = await fetch(processedUri);
       fileBody = await response.blob();
     } else {
       // Native FileSystem read to base64
-      const base64 = await FileSystem.readAsStringAsync(fileUri, {
+      const base64 = await FileSystem.readAsStringAsync(processedUri, {
         encoding: 'base64',
       });
       fileBody = base64ToArrayBuffer(base64);

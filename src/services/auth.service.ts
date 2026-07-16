@@ -74,6 +74,10 @@ export const authService = {
     return data;
   },
 
+  async resetPassword(email: string) {
+    return this.sendPasswordResetEmail(email);
+  },
+
   // Check Current Session
   async getSession() {
     const { data, error } = await supabase.auth.getSession();
@@ -86,5 +90,9 @@ export const authService = {
     const { data, error } = await supabase.auth.getUser();
     if (error) throw error;
     return data.user;
+  },
+
+  async getCurrentUser() {
+    return this.getUser();
   },
 };

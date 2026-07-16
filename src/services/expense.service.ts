@@ -50,6 +50,21 @@ export const dbService = {
     return (data || []).map(fromSupabase);
   },
 
+  async getExpenseById(id: string): Promise<Expense | null> {
+    if (id.startsWith('exp_')) return null;
+    const { data, error } = await supabase
+      .from('expenses')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+    return fromSupabase(data);
+  },
+
   async createExpense(expense: Expense, userId: string): Promise<Expense> {
     const payload = toSupabase(expense, userId);
     const { data, error } = await supabase
