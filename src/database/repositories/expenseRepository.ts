@@ -1,0 +1,259 @@
+import { Platform } from 'react-native';
+import { getDatabase } from '../database';
+import { Expense, Category, Budget, Settings } from '../../types';
+
+export const expenseRepository = {
+  // --- Expenses ---
+  getAllExpenses(): Expense[] {
+    if (Platform.OS === 'web') {
+      const data = localStorage.getItem('web_expenses');
+      return data ? JSON.parse(data) : [];
+    }
+
+    const db = getDatabase();
+    if (!db) return [];
+    return db.getAllSync<Expense>(
+      'SELECT * FROM expenses ORDER BY date DESC, time DESC;'
+    );
+  },
+
+  getExpenseById(id: string): Expense | null {
+    if (Platform.OS === 'web') {
+      const list = this.getAllExpenses();
+      return list.find((e) => e.id === id) || null;
+    }
+
+    const db = getDatabase();
+    if (!db) return null;
+    return db.getFirstSync<Expense>('SELECT * FROM expenses WHERE id = ?;', [id]);
+  },
+
+  createExpense(expense: Expense): void {
+    if (Platform.OS === 'web') {
+      const list = this.getAllExpenses();
+      list.push(expense);
+      localStorage.setItem('web_expenses', JSON.stringify(list));
+      return;
+    }
+
+    const db = getDatabase();
+    if (!db) return;
+    db.runSync(
+      `INSERT INTO expenses (
+        id, amount, merchant, category, date, time, paymentMethod, currency, tax, notes, receiptImage, createdAt, updatedAt, isSynced
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      [
+        expense.id,
+        expense.amount,
+        expense.merchant,
+        expense.category,
+        expense.date,
+        expense.time,
+        expense.paymentMethod,
+        expense.currency,
+        expense.tax ?? null,
+        expense.notes ?? null,
+        expense.receiptImage ?? null,
+        expense.createdAt,
+        expense.updatedAt,
+        expense.isSynced,
+      ]
+    );
+  },
+
+  updateExpense(expense: Expense): void {
+    if (Platform.OS === 'web') {
+      const list = this.getAllExpenses();
+      const updated = list.map((e) => (e.id === expense.id ? expense : e));
+      localStorage.setItem('web_expenses', JSON.stringify(updated));
+      return;
+    }
+
+    const db = getDatabase();
+    if (!db) return;
+    db.runSync(
+      `UPDATE expenses SET 
+        amount = ?, merchant = ?, category = ?, date = ?, time = ?, paymentMethod = ?, currency = ?, tax = ?, notes = ?, receiptImage = ?, updatedAt = ?, isSynced = ?
+      WHERE id = ?;`,
+      [
+        expense.amount,
+        expense.merchant,
+        expense.category,
+        expense.date,
+        expense.time,
+        expense.paymentMethod,
+        expense.currency,
+        expense.tax ?? null,
+        expense.notes ?? null,
+        expense.receiptImage ?? null,
+        expense.updatedAt,
+        expense.isSynced,
+        expense.id,
+      ]
+    );
+  },
+
+  deleteExpense(id: string): void {
+    if (Platform.OS === 'web') {
+      const list = this.getAllExpenses();
+      const filtered = list.filter((e) => e.id !== id);
+      localStorage.setItem('web_expenses', JSON.stringify(filtered));
+      return;
+    }
+
+    const db = getDatabase();
+    if (!db) return;
+    db.runSync('DELETE FROM expenses WHERE id = ?;', [id]);
+  },
+
+  // --- Categories ---
+  getAllCategories(): Category[] {
+    if (Platform.OS === 'web') {
+      const data = localStorage.getItem('web_categories');
+      return data ? JSON.parse(data) : [];
+    }
+
+    const db = getDatabase();
+    if (!db) return [];
+    return db.getAllSync<Category>('SELECT * FROM categories ORDER BY name ASC;');
+  },
+
+  createCategory(category: Category): void {
+    if (Platform.OS === 'web') {
+      const list = this.getAllCategories();
+      list.push(category);
+      localStorage.setItem('web_categories', JSON.stringify(list));
+      return;
+    }
+
+    const db = getDatabase();
+    if (!db) return;
+    db.runSync(
+      'INSERT INTO categories (id, name, icon, color) VALUES (?, ?, ?, ?);',
+      [category.id, category.name, category.icon, category.color]
+    );
+  },
+
+  // --- Budgets ---
+  getAllBudgets(): Budget[] {
+    if (Platform.OS === 'web') {
+      const data = localStorage.getItem('web_budgets');
+      return data ? JSON.parse(data) : [];
+    }
+
+    const db = getDatabase();
+    if (!db) return [];
+    return db.getAllSync<Budget>('SELECT * FROM budgets;');
+  },
+
+  saveBudget(budget: Budget): void {
+    if (Platform.OS === 'web') {
+      const list = this.getAllBudgets();
+      const index = list.findIndex((b) => b.id === budget.id);
+      if (index > -1) {
+        list[index] = budget;
+      } else {
+        list.push(budget);
+      }
+      localStorage.setItem('web_budgets', JSON.stringify(list));
+      return;
+    }
+
+    const db = getDatabase();
+    if (!db) return;
+    const existing = db.getFirstSync<Budget>('SELECT * FROM budgets WHERE id = ?;', [budget.id]);
+    if (existing) {
+      db.runSync(
+        'UPDATE budgets SET category = ?, amount = ?, period = ? WHERE id = ?;',
+        [budget.category, budget.amount, budget.period, budget.id]
+      );
+    } else {
+      db.runSync(
+        'INSERT INTO budgets (id, category, amount, period) VALUES (?, ?, ?, ?);',
+        [budget.id, budget.category, budget.amount, budget.period]
+      );
+    }
+  },
+
+  deleteBudget(id: string): void {
+    if (Platform.OS === 'web') {
+      const list = this.getAllBudgets();
+      const filtered = list.filter((b) => b.id !== id);
+      localStorage.setItem('web_budgets', JSON.stringify(filtered));
+      return;
+    }
+
+    const db = getDatabase();
+    if (!db) return;
+    db.runSync('DELETE FROM budgets WHERE id = ?;', [id]);
+  },
+
+  // --- Settings ---
+  getSettings(): Settings {
+    const defaultKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || 
+                       process.env.GEMINI_API_KEY;
+    if (Platform.OS === 'web') {
+      const data = localStorage.getItem('web_settings');
+      const settingsMap = data ? JSON.parse(data) : {};
+      return {
+        theme: (settingsMap.theme as 'light' | 'dark' | 'system') || 'system',
+        currency: settingsMap.currency || 'USD',
+        notificationsEnabled: settingsMap.notificationsEnabled === 'true' || settingsMap.notificationsEnabled === true,
+        ocrEngine: (settingsMap.ocrEngine as 'mock' | 'cloud') || 'mock',
+        aiCategorizationEnabled: settingsMap.aiCategorizationEnabled === 'true' || settingsMap.aiCategorizationEnabled === true,
+        geminiApiKey: settingsMap.geminiApiKey || defaultKey,
+      };
+    }
+
+    const db = getDatabase();
+    const settings: Settings = {
+      theme: 'system',
+      currency: 'USD',
+      notificationsEnabled: true,
+      ocrEngine: 'mock',
+      aiCategorizationEnabled: true,
+      geminiApiKey: defaultKey,
+    };
+
+    if (!db) return settings;
+    
+    const rows = db.getAllSync<{ key: string; value: string }>('SELECT * FROM settings;');
+
+    rows.forEach((row) => {
+      if (row.key === 'theme') {
+        settings.theme = row.value as 'light' | 'dark' | 'system';
+      } else if (row.key === 'currency') {
+        settings.currency = row.value;
+      } else if (row.key === 'notificationsEnabled') {
+        settings.notificationsEnabled = row.value === 'true';
+      } else if (row.key === 'ocrEngine') {
+        settings.ocrEngine = row.value as 'mock' | 'cloud';
+      } else if (row.key === 'aiCategorizationEnabled') {
+        settings.aiCategorizationEnabled = row.value === 'true';
+      } else if (row.key === 'geminiApiKey') {
+        settings.geminiApiKey = row.value || defaultKey;
+      }
+    });
+
+    return settings;
+  },
+
+  saveSetting(key: string, value: string): void {
+    if (Platform.OS === 'web') {
+      const data = localStorage.getItem('web_settings');
+      const settingsMap = data ? JSON.parse(data) : {};
+      settingsMap[key] = value;
+      localStorage.setItem('web_settings', JSON.stringify(settingsMap));
+      return;
+    }
+
+    const db = getDatabase();
+    if (!db) return;
+    const existing = db.getFirstSync<{ key: string }>('SELECT key FROM settings WHERE key = ?;', [key]);
+    if (existing) {
+      db.runSync('UPDATE settings SET value = ? WHERE key = ?;', [value, key]);
+    } else {
+      db.runSync('INSERT INTO settings (key, value) VALUES (?, ?);', [key, value]);
+    }
+  },
+};

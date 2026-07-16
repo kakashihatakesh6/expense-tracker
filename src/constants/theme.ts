@@ -1,65 +1,74 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-import '@/global.css';
-
 import { Platform } from 'react-native';
+
+export interface ThemeColorsType {
+  readonly primary: string;
+  readonly primaryLight: string;
+  readonly background: string;
+  readonly card: string;
+  readonly text: string;
+  readonly textSecondary: string;
+  readonly border: string;
+  readonly success: string;
+  readonly danger: string;
+  readonly warning: string;
+  readonly info: string;
+  readonly accent: string;
+  readonly cardElevated: string;
+  readonly shadow: string;
+}
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    primary: '#6366F1', // Premium Indigo
+    primaryLight: '#EEF2F6',
+    background: '#F9FAFB', // Soft off-white
+    card: '#FFFFFF',
+    text: '#111827', // Slate 900
+    textSecondary: '#6B7280', // Slate 500
+    border: '#E5E7EB', // Slate 200
+    success: '#10B981', // Emerald Green
+    danger: '#EF4444', // Red
+    warning: '#F59E0B', // Amber
+    info: '#3B82F6', // Blue
+    accent: '#8B5CF6', // Violet
+    cardElevated: '#FFFFFF',
+    shadow: 'rgba(0, 0, 0, 0.05)',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    primary: '#818CF8', // Bright Indigo
+    primaryLight: '#1E1B4B',
+    background: '#0B0F19', // Dark rich navy/slate
+    card: '#151D30', // Elevated blue-grey card
+    text: '#F9FAFB', // Slate 50
+    textSecondary: '#9CA3AF', // Slate 400
+    border: '#1F293D', // Slate 800
+    success: '#34D399', // Mint Green
+    danger: '#F87171', // Soft Red
+    warning: '#FBBF24', // Yellow
+    info: '#60A5FA', // Sky Blue
+    accent: '#A78BFA', // Violet Accent
+    cardElevated: '#1E293B',
+    shadow: 'rgba(0, 0, 0, 0.3)',
   },
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
+    sans: 'System',
+    rounded: 'System',
   },
   default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
+    sans: 'sans-serif',
+    rounded: 'sans-serif-condensed',
   },
 });
 
 export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
 } as const;
-
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
