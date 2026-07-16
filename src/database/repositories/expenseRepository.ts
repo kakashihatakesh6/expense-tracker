@@ -106,6 +106,17 @@ export const expenseRepository = {
     db.runSync('DELETE FROM expenses WHERE id = ?;', [id]);
   },
 
+  clearAllExpenses(): void {
+    if (Platform.OS === 'web') {
+      localStorage.setItem('web_expenses', JSON.stringify([]));
+      return;
+    }
+
+    const db = getDatabase();
+    if (!db) return;
+    db.runSync('DELETE FROM expenses;');
+  },
+
   // --- Categories ---
   getAllCategories(): Category[] {
     if (Platform.OS === 'web') {

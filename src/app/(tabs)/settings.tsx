@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useExpenseStore } from '../../store/expenseStore';
+import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/Card';
 import { exportService } from '../../services/exportService';
@@ -25,14 +26,34 @@ import {
   Cpu,
   Info,
   DollarSign,
+  LogOut,
 } from 'lucide-react-native';
 
 export default function SettingsScreen() {
   const { colors, theme } = useTheme();
+  const user = useAuthStore((state) => state.user);
+  const signOut = useAuthStore((state) => state.signOut);
   
   const { settings, setTheme, setCurrency, setNotificationsEnabled, setAiCategorizationEnabled, setOcrEngine, setGeminiApiKey } =
     useSettingsStore();
   const { expenses } = useExpenseStore();
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out of your account?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Sign Out', 
+          style: 'destructive',
+          onPress: async () => {
+            await signOut();
+          }
+        }
+      ]
+    );
+  };
 
   const handleThemeChange = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -98,6 +119,40 @@ export default function SettingsScreen() {
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
         
+        {/* Section: Account */}
+        {user && (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>MY ACCOUNT</Text>
+            <Card style={styles.settingsCard}>
+              <View style={styles.row}>
+                <View style={[styles.rowIconBg, { backgroundColor: colors.primaryLight }]}>
+                  <Info size={20} color={colors.primary} />
+                </View>
+                <View style={styles.rowInfo}>
+                  <Text style={[styles.rowLabel, { color: colors.text }]}>Logged in as</Text>
+                  <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
+                    {user.email}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+              <TouchableOpacity style={styles.row} onPress={handleLogout} activeOpacity={0.7}>
+                <View style={[styles.rowIconBg, { backgroundColor: colors.danger + '20' }]}>
+                  <LogOut size={20} color={colors.danger} />
+                </View>
+                <View style={styles.rowInfo}>
+                  <Text style={[styles.rowLabel, { color: colors.danger }]}>Sign Out</Text>
+                  <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
+                    Log out of your Supabase account
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </Card>
+          </>
+        )}
+
         {/* Section: Appearance */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>PREFERENCES</Text>
         <Card style={styles.settingsCard}>

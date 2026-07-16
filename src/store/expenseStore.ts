@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { Expense, Category, Budget } from '../types';
 import { expenseRepository } from '../database/repositories/expenseRepository';
+import { useAuthStore } from './authStore';
+import { dbService } from '../services/expense.service';
+import { storageService } from '../services/storage.service';
 
 interface ExpenseState {
   expenses: Expense[];
@@ -8,13 +11,13 @@ interface ExpenseState {
   budgets: Budget[];
   isLoading: boolean;
   
-  fetchExpenses: () => void;
+  fetchExpenses: () => Promise<void>;
   fetchCategories: () => void;
   fetchBudgets: () => void;
   
-  addExpense: (expenseData: Omit<Expense, 'createdAt' | 'updatedAt' | 'isSynced'>) => void;
-  updateExpense: (expense: Expense) => void;
-  deleteExpense: (id: string) => void;
+  addExpense: (expenseData: Omit<Expense, 'createdAt' | 'updatedAt' | 'isSynced'>) => Promise<void>;
+  updateExpense: (expense: Expense) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
   
   saveBudget: (budget: Budget) => void;
   deleteBudget: (id: string) => void;
@@ -26,14 +29,33 @@ export const useExpenseStore = create<ExpenseState>((set, get) => ({
   budgets: [],
   isLoading: false,
 
-  fetchExpenses: () => {
+  fetchExpenses: async () => {
     set({ isLoading: true });
     try {
-      const expenses = expenseRepository.getAllExpenses();
-      set({ expenses, isLoading: false });
+      const user = useAuthStore.getState().user;
+      if (user) {
+        // Fetch from Supabase cloud database
+        const remoteExpenses = await dbService.getExpenses();
+        // Overwrite local SQLite cache with latest cloud records
+        expenseRepository.clearAllExpenses();
+        for (const exp of remoteExpenses) {
+          expenseRepository.createExpense(exp);
+        }
+        set({ expenses: remoteExpenses, isLoading: false });
+      } else {
+        // Fallback to offline SQLite DB
+        const expenses = expenseRepository.getAllExpenses();
+        set({ expenses, isLoading: false });
+      }
     } catch (error) {
-      console.error('Error fetching expenses from DB:', error);
-      set({ isLoading: false });
+      console.error('Error fetching expenses:', error);
+      // Graceful offline fallback
+      try {
+        const expenses = expenseRepository.getAllExpenses();
+        set({ expenses, isLoading: false });
+      } catch (fallbackError) {
+        set({ isLoading: false });
+      }
     }
   },
 
@@ -55,53 +77,109 @@ export const useExpenseStore = create<ExpenseState>((set, get) => ({
     }
   },
 
-  addExpense: (expenseData) => {
+  addExpense: async (expenseData) => {
     try {
       const now = new Date().toISOString();
+      const user = useAuthStore.getState().user;
+      
+      let imageUrl = expenseData.receiptImage;
+      if (user && expenseData.receiptImage && !expenseData.receiptImage.startsWith('http')) {
+        try {
+          imageUrl = await storageService.uploadReceipt(expenseData.receiptImage, user.id);
+        } catch (uploadError) {
+          console.error('Failed to upload receipt to storage:', uploadError);
+        }
+      }
+
       const expense: Expense = {
         ...expenseData,
+        receiptImage: imageUrl,
         createdAt: now,
         updatedAt: now,
-        isSynced: 0,
+        isSynced: user ? 1 : 0,
       };
-      
-      expenseRepository.createExpense(expense);
-      
-      set((state) => ({
-        expenses: [expense, ...state.expenses],
-      }));
+
+      if (user) {
+        // Save to Supabase Cloud DB
+        const remoteExpense = await dbService.createExpense(expense, user.id);
+        // Cache locally in SQLite
+        expenseRepository.createExpense(remoteExpense);
+        set((state) => ({
+          expenses: [remoteExpense, ...state.expenses],
+        }));
+      } else {
+        // Local SQLite only
+        expenseRepository.createExpense(expense);
+        set((state) => ({
+          expenses: [expense, ...state.expenses],
+        }));
+      }
     } catch (error) {
-      console.error('Error adding expense to DB:', error);
+      console.error('Error adding expense:', error);
     }
   },
 
-  updateExpense: (expense) => {
+  updateExpense: async (expense) => {
     try {
       const now = new Date().toISOString();
+      const user = useAuthStore.getState().user;
+
+      let imageUrl = expense.receiptImage;
+      
+      if (user && expense.receiptImage && !expense.receiptImage.startsWith('http')) {
+        try {
+          const original = get().expenses.find((e) => e.id === expense.id);
+          if (original?.receiptImage) {
+            await storageService.deleteReceipt(original.receiptImage);
+          }
+          imageUrl = await storageService.uploadReceipt(expense.receiptImage, user.id);
+        } catch (uploadError) {
+          console.error('Failed to upload updated receipt to storage:', uploadError);
+        }
+      }
+
       const updatedExpense: Expense = {
         ...expense,
+        receiptImage: imageUrl,
         updatedAt: now,
-        isSynced: 0,
+        isSynced: user ? 1 : 0,
       };
 
-      expenseRepository.updateExpense(updatedExpense);
-
-      set((state) => ({
-        expenses: state.expenses.map((e) => (e.id === expense.id ? updatedExpense : e)),
-      }));
+      if (user) {
+        const remoteExpense = await dbService.updateExpense(updatedExpense, user.id);
+        expenseRepository.updateExpense(remoteExpense);
+        set((state) => ({
+          expenses: state.expenses.map((e) => (e.id === expense.id ? remoteExpense : e)),
+        }));
+      } else {
+        expenseRepository.updateExpense(updatedExpense);
+        set((state) => ({
+          expenses: state.expenses.map((e) => (e.id === expense.id ? updatedExpense : e)),
+        }));
+      }
     } catch (error) {
-      console.error('Error updating expense in DB:', error);
+      console.error('Error updating expense:', error);
     }
   },
 
-  deleteExpense: (id) => {
+  deleteExpense: async (id) => {
     try {
+      const user = useAuthStore.getState().user;
+      
+      if (user) {
+        const original = get().expenses.find((e) => e.id === id);
+        if (original?.receiptImage) {
+          await storageService.deleteReceipt(original.receiptImage);
+        }
+        await dbService.deleteExpense(id);
+      }
+
       expenseRepository.deleteExpense(id);
       set((state) => ({
         expenses: state.expenses.filter((e) => e.id !== id),
       }));
     } catch (error) {
-      console.error('Error deleting expense from DB:', error);
+      console.error('Error deleting expense:', error);
     }
   },
 
