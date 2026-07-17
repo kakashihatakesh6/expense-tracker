@@ -19,7 +19,7 @@ import { aiService } from '../../services/aiService';
 import { useExpenseStore } from '../../store/expenseStore';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/Card';
-import { Camera as CameraIcon, Check, RefreshCw, Sparkles, X, Image as ImageIcon } from 'lucide-react-native';
+import { Camera as CameraIcon, Check, RefreshCw, Sparkles, X, Image as ImageIcon, ZapOff, Zap, RotateCw } from 'lucide-react-native';
 
 export default function OCRScanModal() {
   const router = useRouter();
@@ -40,6 +40,27 @@ export default function OCRScanModal() {
   const [category, setCategory] = useState('');
   const [date, setDate] = useState('');
   const [tax, setTax] = useState('');
+
+  // Camera Settings
+  const [flash, setFlash] = useState<'on' | 'off' | 'fill'>('off');
+  const [facing, setFacing] = useState<'front' | 'back'>('back');
+
+  const toggleFlash = () => {
+    setFlash((current) => {
+      if (current === 'off') return 'on';
+      if (current === 'on') return 'fill';
+      return 'off';
+    });
+  };
+
+  const toggleFacing = () => {
+    setFacing((current) => (current === 'back' ? 'front' : 'back'));
+  };
+
+  const getCameraFlashProp = (mode: 'on' | 'off' | 'fill'): 'on' | 'off' | 'auto' => {
+    if (mode === 'fill') return 'off';
+    return mode;
+  };
 
   const cameraRef = useRef<any>(null);
 
@@ -208,6 +229,142 @@ export default function OCRScanModal() {
         <Text style={[styles.sub, { color: colors.textSecondary, textAlign: 'center', marginTop: 8 }]}>
           Please allow camera access in your system preferences to scan invoices and receipts.
         </Text>
+      </View>
+    );
+  }
+
+  if (!photoUri && !isScanning) {
+    return (
+      <View style={[styles.fullScreenContainer, { backgroundColor: '#090D16' }]}>
+        {/* Viewfinder Area (Top 68% approximately) */}
+        <View style={styles.viewfinderContainer}>
+          {Device.isDevice ? (
+            <CameraView 
+              style={StyleSheet.absoluteFillObject} 
+              ref={cameraRef} 
+              flash={getCameraFlashProp(flash)}
+              enableTorch={flash === 'fill'}
+              facing={facing}
+              onCameraReady={() => setIsCameraReady(true)}
+            />
+          ) : (
+            <View style={[StyleSheet.absoluteFillObject, styles.simulatedCameraContainer]}>
+              <View style={styles.simulatedCameraBackground}>
+                <Sparkles size={48} color={colors.primary} style={styles.simulatedCameraIcon} />
+                <Text style={[styles.simulatedCameraTitle, { color: '#FFF' }]}>Simulator Camera Active</Text>
+                <Text style={[styles.simulatedCameraSubtitle, { color: 'rgba(255,255,255,0.6)' }]}>
+                  Simulation Mode • Ready to Capture
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Viewfinder Header Overlays */}
+          <View style={styles.headerControls}>
+            <TouchableOpacity 
+              style={styles.headerControlBtn} 
+              activeOpacity={0.7}
+              onPress={toggleFlash}
+            >
+              {flash === 'on' ? (
+                <Zap size={20} color="#34D399" />
+              ) : flash === 'fill' ? (
+                <Zap size={20} color="#FBBF24" />
+              ) : (
+                <ZapOff size={20} color="#FFF" />
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.headerControlBtn} 
+              activeOpacity={0.7}
+              onPress={toggleFacing}
+            >
+              <RotateCw size={20} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Viewfinder Target Frame */}
+          <View style={styles.frameContainer} pointerEvents="none">
+            <Text style={styles.frameLabel}>Receipt Frame</Text>
+            <View style={styles.targetFrame}>
+              <View style={[styles.corner, styles.topLeft]} />
+              <View style={[styles.corner, styles.topRight]} />
+              <View style={[styles.corner, styles.bottomLeft]} />
+              <View style={[styles.corner, styles.bottomRight]} />
+              <Text style={styles.frameInstructionText}>Align Receipt within frame...</Text>
+            </View>
+          </View>
+
+          {/* Viewfinder Bottom controls (Shutter and Gallery) */}
+          <View style={styles.viewfinderBottomRow}>
+            {/* Shutter button centered */}
+            <TouchableOpacity 
+              style={[styles.shutterBtn, { opacity: isCameraReady ? 1 : 0.6 }]} 
+              onPress={() => capturePhoto()}
+              disabled={!isCameraReady}
+              activeOpacity={0.9}
+            >
+              <View style={styles.shutterBtnInner} />
+            </TouchableOpacity>
+
+            {/* Gallery button on the right */}
+            <TouchableOpacity 
+              style={styles.galleryIconBtn} 
+              onPress={pickFromGallery}
+              activeOpacity={0.7}
+            >
+              <ImageIcon size={20} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Bottom Control Panel */}
+        <View style={styles.bottomControlPanel}>
+          {/* Capture Modes */}
+          <View style={styles.modesToggleRow}>
+            <View style={styles.modeSegmentActive}>
+              <Text style={styles.modeSegmentTextActive}>Auto-Capture</Text>
+            </View>
+            <View style={styles.modeSegmentInactive}>
+              <Text style={styles.modeSegmentTextInactive}>Manual Capture</Text>
+            </View>
+          </View>
+
+          {/* Total Detected Card */}
+          <View style={styles.detectedStatusCard}>
+            <View style={styles.detectedTextColumn}>
+              <Text style={styles.detectedHeading}>Total Detected (INR)</Text>
+              <Text style={styles.detectedScanningLabel}>active scanning</Text>
+            </View>
+            <View style={styles.detectedAmountBadge}>
+              <Text style={styles.detectedAmountText}>₹ 1,371.00</Text>
+            </View>
+          </View>
+
+          {/* Progress Indicators */}
+          <View style={styles.scanningProgressSection}>
+            <View style={styles.progressItem}>
+              <Text style={styles.progressTextLabel}>Detecting Date</Text>
+              <View style={styles.progressBarTrack}>
+                <View style={[styles.progressBarIndicator, { width: '70%' }]} />
+              </View>
+            </View>
+
+            <View style={styles.progressItem}>
+              <Text style={styles.progressTextLabel}>Categorizing Expense...</Text>
+              <View style={styles.progressBarTrack}>
+                <View style={[styles.progressBarIndicator, { width: '45%' }]} />
+              </View>
+            </View>
+          </View>
+
+          {/* Glowing AI Tab */}
+          <View style={styles.aiGlowTab}>
+            <Sparkles size={13} color="#818CF8" style={{ marginRight: 4 }} />
+            <Text style={styles.aiGlowTabText}>AI</Text>
+          </View>
+        </View>
       </View>
     );
   }
@@ -728,5 +885,263 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     width: '100%',
+  },
+  fullScreenContainer: {
+    flex: 1,
+  },
+  viewfinderContainer: {
+    height: '68%',
+    position: 'relative',
+    backgroundColor: '#000',
+    overflow: 'visible',
+  },
+  headerControls: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 10,
+  },
+  headerControlBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  frameContainer: {
+    position: 'absolute',
+    top: '15%',
+    left: 40,
+    right: 40,
+    bottom: '20%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 5,
+  },
+  frameLabel: {
+    color: '#34D399',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  targetFrame: {
+    width: '100%',
+    height: '85%',
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderRadius: 12,
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  corner: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    borderColor: '#34D399',
+  },
+  topLeft: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 3.5,
+    borderLeftWidth: 3.5,
+    borderTopLeftRadius: 8,
+  },
+  topRight: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 3.5,
+    borderRightWidth: 3.5,
+    borderTopRightRadius: 8,
+  },
+  bottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 3.5,
+    borderLeftWidth: 3.5,
+    borderBottomLeftRadius: 8,
+  },
+  bottomRight: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 3.5,
+    borderRightWidth: 3.5,
+    borderBottomRightRadius: 8,
+  },
+  frameInstructionText: {
+    color: '#E2E8F0',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  viewfinderBottomRow: {
+    position: 'absolute',
+    bottom: -36,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  shutterBtn: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shutterBtnInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFF',
+  },
+  galleryIconBtn: {
+    position: 'absolute',
+    right: 40,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  bottomControlPanel: {
+    height: '32%',
+    backgroundColor: '#090D16',
+    borderTopWidth: 1,
+    borderTopColor: '#1E293B',
+    paddingTop: 48,
+    alignItems: 'center',
+  },
+  modesToggleRow: {
+    flexDirection: 'row',
+    backgroundColor: '#111827',
+    borderRadius: 20,
+    padding: 3,
+    width: '80%',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#1E293D',
+  },
+  modeSegmentActive: {
+    flex: 1,
+    height: 32,
+    backgroundColor: '#1E293B',
+    borderRadius: 17,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modeSegmentTextActive: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  modeSegmentInactive: {
+    flex: 1,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modeSegmentTextInactive: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  detectedStatusCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '90%',
+    borderWidth: 1.5,
+    borderColor: '#34D399',
+    borderRadius: 16,
+    backgroundColor: '#0A1E17',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  detectedTextColumn: {
+    flexDirection: 'column',
+  },
+  detectedHeading: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  detectedScanningLabel: {
+    color: '#34D399',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  detectedAmountBadge: {
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  detectedAmountText: {
+    color: '#34D399',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  scanningProgressSection: {
+    width: '90%',
+    marginTop: 16,
+    gap: 8,
+  },
+  progressItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  progressTextLabel: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
+    width: '40%',
+  },
+  progressBarTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#1E293B',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressBarIndicator: {
+    height: '100%',
+    backgroundColor: '#34D399',
+    borderRadius: 3,
+  },
+  aiGlowTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#172554',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginTop: 14,
+    shadowColor: '#818CF8',
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  aiGlowTabText: {
+    color: '#818CF8',
+    fontSize: 9,
+    fontWeight: '800',
   },
 });
