@@ -37,6 +37,7 @@ import {
   X,
   ChevronRight,
   Mail,
+  Lightbulb,
 } from 'lucide-react-native';
 import { TransactionDetailModal } from '../../components/TransactionDetailModal';
 import { Expense } from '../../types';
@@ -130,17 +131,17 @@ export default function Dashboard() {
               return d.toISOString().split('T')[0];
             };
 
-            // Seed budget
+             // Seed budget
             saveBudget({
-              id: 'overall_monthly',
+              id: 'all_monthly',
               category: 'All',
               amount: 1200,
               period: 'monthly',
             });
-
-            // Seed category budgets
-            saveBudget({
-              id: 'food_budget',
+ 
+             // Seed category budgets
+             saveBudget({
+              id: 'food_monthly',
               category: 'Food',
               amount: 300,
               period: 'monthly',
@@ -222,20 +223,23 @@ export default function Dashboard() {
   };
 
   const getInsightIcon = (type: string) => {
-    switch (type) {
-      case 'warning':
-        return <AlertTriangle size={18} color={colors.danger} />;
-      case 'success':
-        return <CheckCircle size={18} color={colors.success} />;
-      default:
-        return <Info size={18} color={colors.info} />;
+    if (type === 'warning') {
+      return <Lightbulb size={20} color={isDark ? '#FCA5A5' : '#EF4444'} />;
     }
+    if (type === 'success') {
+      return <Lightbulb size={20} color={isDark ? '#34D399' : '#10B981'} />;
+    }
+    return <Lightbulb size={20} color={isDark ? '#93C5FD' : '#3B82F6'} />;
   };
 
   const getInsightBg = (type: string) => {
-    if (type === 'warning') return isDark ? '#3b1c1c' : '#fee2e2';
-    if (type === 'success') return isDark ? '#1c3b2b' : '#d1fae5';
-    return colors.primaryLight;
+    if (type === 'warning') {
+      return isDark ? '#2e1818' : '#FEF2F2'; // Soft red/orange
+    }
+    if (type === 'success') {
+      return isDark ? '#142921' : '#ECFDF5'; // Soft green
+    }
+    return isDark ? '#172554' : '#EFF6FF'; // Soft blue
   };
 
   return (
@@ -371,13 +375,12 @@ export default function Dashboard() {
             key={insight.id}
             style={[
               styles.insightItem,
-              { backgroundColor: getInsightBg(insight.type), borderColor: colors.border },
+              { backgroundColor: getInsightBg(insight.type) },
             ]}
           >
             <View style={styles.insightIconColumn}>{getInsightIcon(insight.type)}</View>
             <View style={styles.insightContent}>
-              <Text style={[styles.insightTitle, { color: colors.text }]}>{insight.title}</Text>
-              <Text style={[styles.insightDesc, { color: colors.textSecondary }]}>
+              <Text style={[styles.insightDesc, { color: isDark ? '#F9FAFB' : '#1F2937' }]}>
                 {insight.description}
               </Text>
             </View>
@@ -750,26 +753,23 @@ const styles = StyleSheet.create({
   },
   insightItem: {
     flexDirection: 'row',
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginVertical: 4,
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginVertical: 6,
   },
   insightIconColumn: {
-    marginRight: 10,
+    marginRight: 14,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   insightContent: {
     flex: 1,
   },
-  insightTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
   insightDesc: {
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 2,
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
   },
   emptyContainer: {
     height: 200,

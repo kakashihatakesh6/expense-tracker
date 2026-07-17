@@ -71,7 +71,7 @@ export default function BudgetModal() {
         <Card style={styles.formCard}>
           <Text style={[styles.inputHeading, { color: colors.textSecondary }]}>CHOOSE CATEGORY</Text>
           <View style={styles.categoryPillRow}>
-            {['All', ...categories.map((c) => c.name)].slice(0, 7).map((catName) => {
+            {['All', ...categories.map((c) => c.name)].map((catName) => {
               const isSelected = selectedCategory === catName;
               return (
                 <TouchableOpacity
