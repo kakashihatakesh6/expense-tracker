@@ -30,6 +30,8 @@ import {
   AlertTriangle,
   BadgeAlert,
 } from 'lucide-react-native';
+import { TransactionDetailModal } from '../../components/TransactionDetailModal';
+import { Expense } from '../../types';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -40,6 +42,7 @@ export default function Dashboard() {
   const { settings } = useSettingsStore();
 
   const [activeTab, setActiveTab] = useState<'today' | 'week' | 'month' | 'year'>('month');
+  const [selectedTransaction, setSelectedTransaction] = useState<Expense | null>(null);
 
   useEffect(() => {
     fetchExpenses();
@@ -105,13 +108,13 @@ export default function Dashboard() {
 
             // Seed expenses
             const mockItems = [
-              { id: 'm1', amount: 8.75, merchant: 'Starbucks Coffee', category: 'Food', date: today, time: '08:45', paymentMethod: 'Credit Card', currency: settings.currency, notes: 'Caffe Latte & Scone' },
-              { id: 'm2', amount: 24.50, merchant: 'Uber Ride', category: 'Travel', date: getPastDate(1), time: '18:30', paymentMethod: 'Google Pay', currency: settings.currency, notes: 'Office to home' },
-              { id: 'm3', amount: 85.20, merchant: 'Walmart Grocery', category: 'Grocery', date: getPastDate(1), time: '11:15', paymentMethod: 'Debit Card', currency: settings.currency, notes: 'Weekly groceries' },
-              { id: 'm4', amount: 45.00, merchant: 'Shell Gas Station', category: 'Fuel', date: getPastDate(2), time: '07:30', paymentMethod: 'Cash', currency: settings.currency, notes: 'Fuel fillup' },
+              { id: 'm1', amount: 8.75, merchant: 'Starbucks Coffee', category: 'Food', date: today, time: '08:45', paymentMethod: 'Credit Card', currency: settings.currency, notes: 'Caffe Latte & Scone', receiptImage: 'mock_starbucks.jpg' },
+              { id: 'm2', amount: 24.50, merchant: 'Uber Ride', category: 'Travel', date: getPastDate(1), time: '18:30', paymentMethod: 'Google Pay', currency: settings.currency, notes: 'Office to home', receiptImage: 'mock_gpay_upi_screenshot.png' },
+              { id: 'm3', amount: 85.20, merchant: 'Walmart Grocery', category: 'Grocery', date: getPastDate(1), time: '11:15', paymentMethod: 'Debit Card', currency: settings.currency, notes: 'Weekly groceries', receiptImage: 'mock_walmart.jpg' },
+              { id: 'm4', amount: 45.00, merchant: 'Shell Gas Station', category: 'Fuel', date: getPastDate(2), time: '07:30', paymentMethod: 'Cash', currency: settings.currency, notes: 'Fuel fillup', receiptImage: 'mock_shell.jpg' },
               { id: 'm5', amount: 15.49, merchant: 'Netflix Subscription', category: 'Entertainment', date: getPastDate(3), time: '00:00', paymentMethod: 'Credit Card', currency: settings.currency, notes: 'Monthly standard plan' },
-              { id: 'm6', amount: 19.99, merchant: 'Amazon Charger', category: 'Shopping', date: getPastDate(4), time: '14:20', paymentMethod: 'Google Pay', currency: settings.currency, notes: 'Wireless charging pad' },
-              { id: 'm7', amount: 79.99, merchant: 'Comcast Broadband', category: 'Bills', date: getPastDate(5), time: '10:00', paymentMethod: 'UPI (GPay)', currency: settings.currency, notes: 'WiFi bill' },
+              { id: 'm6', amount: 19.99, merchant: 'Amazon Charger', category: 'Shopping', date: getPastDate(4), time: '14:20', paymentMethod: 'Google Pay', currency: settings.currency, notes: 'Wireless charging pad', receiptImage: 'mock_amazon.jpg' },
+              { id: 'm7', amount: 79.99, merchant: 'Comcast Broadband', category: 'Bills', date: getPastDate(5), time: '10:00', paymentMethod: 'UPI (GPay)', currency: settings.currency, notes: 'WiFi bill', receiptImage: 'mock_gpay_upi_screenshot.png' },
               { id: 'm8', amount: 125.00, merchant: 'CVS Pharmacy', category: 'Health', date: getPastDate(6), time: '16:45', paymentMethod: 'Credit Card', currency: settings.currency, notes: 'Vitamins & meds' },
             ];
 
@@ -368,32 +371,38 @@ export default function Dashboard() {
       ) : (
         <View style={styles.recentList}>
           {recentExpenses.map((expense) => (
-            <Card key={expense.id} style={styles.transactionItem}>
-              <View style={styles.txRow}>
-                <View
-                  style={[
-                    styles.txCategoryDot,
-                    { backgroundColor: getCategoryColor(expense.category) },
-                  ]}
-                />
-                <View style={styles.txDetails}>
-                  <Text style={[styles.txMerchant, { color: colors.text }]} numberOfLines={1}>
-                    {expense.merchant}
-                  </Text>
-                  <Text style={[styles.txSub, { color: colors.textSecondary }]}>
-                    {expense.category} • {expense.date}
+            <TouchableOpacity key={expense.id} onPress={() => setSelectedTransaction(expense)}>
+              <Card style={styles.transactionItem}>
+                <View style={styles.txRow}>
+                  <View
+                    style={[
+                      styles.txCategoryDot,
+                      { backgroundColor: getCategoryColor(expense.category) },
+                    ]}
+                  />
+                  <View style={styles.txDetails}>
+                    <Text style={[styles.txMerchant, { color: colors.text }]} numberOfLines={1}>
+                      {expense.merchant}
+                    </Text>
+                    <Text style={[styles.txSub, { color: colors.textSecondary }]}>
+                      {expense.category} • {expense.date}
+                    </Text>
+                  </View>
+                  <Text style={[styles.txAmount, { color: colors.text }]}>
+                    {settings.currency === 'INR' ? '₹' : '$'}
+                    {expense.amount.toFixed(2)}
                   </Text>
                 </View>
-                <Text style={[styles.txAmount, { color: colors.text }]}>
-                  {settings.currency === 'INR' ? '₹' : '$'}
-                  {expense.amount.toFixed(2)}
-                </Text>
-              </View>
-            </Card>
+              </Card>
+            </TouchableOpacity>
           ))}
         </View>
       )}
       <View style={{ height: 40 }} />
+      <TransactionDetailModal
+        transaction={selectedTransaction}
+        onClose={() => setSelectedTransaction(null)}
+      />
     </ScrollView>
   );
 }

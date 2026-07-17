@@ -24,6 +24,8 @@ import {
   X,
   Plus,
 } from 'lucide-react-native';
+import { TransactionDetailModal } from '../../components/TransactionDetailModal';
+import { Expense } from '../../types';
 
 export default function ExpensesList() {
   const router = useRouter();
@@ -36,6 +38,7 @@ export default function ExpensesList() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc'>('date-desc');
   const [showSortOptions, setShowSortOptions] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Expense | null>(null);
 
   useEffect(() => {
     fetchExpenses();
@@ -242,41 +245,43 @@ export default function ExpensesList() {
                 renderRightActions={() => renderRightActions(item.id, item.merchant)}
                 friction={2}
               >
-                <Card style={styles.transactionCard}>
-                  <View style={styles.txRow}>
-                    <View
-                      style={[
-                        styles.txCategoryDot,
-                        { backgroundColor: getCategoryColor(item.category) },
-                      ]}
-                    />
-                    <View style={styles.txDetails}>
-                      <Text style={[styles.txMerchant, { color: colors.text }]} numberOfLines={1}>
-                        {item.merchant}
-                      </Text>
-                      <Text style={[styles.txSub, { color: colors.textSecondary }]}>
-                        {item.category} • {item.time}
-                      </Text>
-                      {item.notes ? (
-                        <Text style={[styles.txNotes, { color: colors.textSecondary }]} numberOfLines={1}>
-                          {"\""}{item.notes}{"\""}
+                <TouchableOpacity onPress={() => setSelectedTransaction(item)} activeOpacity={0.7}>
+                  <Card style={styles.transactionCard}>
+                    <View style={styles.txRow}>
+                      <View
+                        style={[
+                          styles.txCategoryDot,
+                          { backgroundColor: getCategoryColor(item.category) },
+                        ]}
+                      />
+                      <View style={styles.txDetails}>
+                        <Text style={[styles.txMerchant, { color: colors.text }]} numberOfLines={1}>
+                          {item.merchant}
                         </Text>
-                      ) : null}
-                    </View>
-                    <View style={styles.amountCol}>
-                      <Text style={[styles.txAmount, { color: colors.text }]}>
-                        {settings.currency === 'INR' ? '₹' : '$'}
-                        {item.amount.toFixed(2)}
-                      </Text>
-                      <View style={styles.dateBadge}>
-                        <Calendar size={10} color={colors.textSecondary} />
-                        <Text style={[styles.dateBadgeText, { color: colors.textSecondary }]}>
-                          {item.date}
+                        <Text style={[styles.txSub, { color: colors.textSecondary }]}>
+                          {item.category} • {item.time}
                         </Text>
+                        {item.notes ? (
+                          <Text style={[styles.txNotes, { color: colors.textSecondary }]} numberOfLines={1}>
+                            {"\""}{item.notes}{"\""}
+                          </Text>
+                        ) : null}
+                      </View>
+                      <View style={styles.amountCol}>
+                        <Text style={[styles.txAmount, { color: colors.text }]}>
+                          {settings.currency === 'INR' ? '₹' : '$'}
+                          {item.amount.toFixed(2)}
+                        </Text>
+                        <View style={styles.dateBadge}>
+                          <Calendar size={10} color={colors.textSecondary} />
+                          <Text style={[styles.dateBadgeText, { color: colors.textSecondary }]}>
+                            {item.date}
+                          </Text>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                </Card>
+                  </Card>
+                </TouchableOpacity>
               </Swipeable>
             )}
           />
@@ -290,6 +295,11 @@ export default function ExpensesList() {
         >
           <Plus size={24} color="#FFF" />
         </TouchableOpacity>
+        
+        <TransactionDetailModal
+          transaction={selectedTransaction}
+          onClose={() => setSelectedTransaction(null)}
+        />
       </View>
     </GestureHandlerRootView>
   );

@@ -14,6 +14,7 @@ import { useRouter, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useExpenseStore } from '../../store/expenseStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTheme } from '../../hooks/useTheme';
+import { expenseHelpers } from '../../utils/expenseHelpers';
 import { Card } from '../../components/Card';
 import * as ImagePicker from 'expo-image-picker';
 import { notificationService } from '../../services/notificationService';
@@ -34,7 +35,7 @@ export default function AddExpenseModal() {
   const [amount, setAmount] = useState('');
   const [merchant, setMerchant] = useState('');
   const [category, setCategory] = useState('Food');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(expenseHelpers.getLocalDateString());
   const [time, setTime] = useState(new Date().toTimeString().slice(0, 5));
   const [paymentMethod, setPaymentMethod] = useState('Credit Card');
   const [notes, setNotes] = useState('');
@@ -132,9 +133,9 @@ export default function AddExpenseModal() {
     const overallBudget = budgets.find((b) => b.category === 'All' && b.period === 'monthly');
     if (overallBudget) {
       const monthlySpend = expenses
-        .filter((e) => e.date.startsWith(new Date().toISOString().slice(0, 7)))
-        .reduce((sum, e) => sum + e.amount, 0) + itemAmount;
-
+        .filter((e) => e.date.startsWith(expenseHelpers.getLocalDateString().slice(0, 7)))
+        .reduce((sum, e) => sum + Number(e.amount), 0) + itemAmount;
+  
       if (monthlySpend > overallBudget.amount) {
         notificationService.sendImmediateNotification(
           '🚨 Monthly Budget Exceeded!',
@@ -142,13 +143,13 @@ export default function AddExpenseModal() {
         );
       }
     }
-
+  
     // 2. Specific category budget check
     const catBudget = budgets.find((b) => b.category === itemCategory && b.period === 'monthly');
     if (catBudget) {
       const catSpend = expenses
-        .filter((e) => e.category === itemCategory && e.date.startsWith(new Date().toISOString().slice(0, 7)))
-        .reduce((sum, e) => sum + e.amount, 0) + itemAmount;
+        .filter((e) => e.category === itemCategory && e.date.startsWith(expenseHelpers.getLocalDateString().slice(0, 7)))
+        .reduce((sum, e) => sum + Number(e.amount), 0) + itemAmount;
 
       if (catSpend > catBudget.amount) {
         notificationService.sendImmediateNotification(

@@ -1,44 +1,54 @@
 import { Expense, Budget, SpendingInsight } from '../types';
 
 export const expenseHelpers = {
+  getLocalDateString(d: Date = new Date()): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  },
+
   getTodaySpend(expenses: Expense[]): number {
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.getLocalDateString();
     return expenses
       .filter((e) => e.date === today)
-      .reduce((sum, e) => sum + e.amount, 0);
+      .reduce((sum, e) => sum + Number(e.amount), 0);
   },
 
   getWeeklySpend(expenses: Expense[]): number {
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    const startStr = oneWeekAgo.toISOString().split('T')[0];
+    // Current week from Sunday
+    const today = new Date();
+    const currentDay = today.getDay();
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - currentDay);
+    const startStr = this.getLocalDateString(sunday);
 
     return expenses
       .filter((e) => e.date >= startStr)
-      .reduce((sum, e) => sum + e.amount, 0);
+      .reduce((sum, e) => sum + Number(e.amount), 0);
   },
 
   getMonthlySpend(expenses: Expense[]): number {
-    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const currentMonth = this.getLocalDateString().slice(0, 7); // YYYY-MM
     return expenses
       .filter((e) => e.date.startsWith(currentMonth))
-      .reduce((sum, e) => sum + e.amount, 0);
+      .reduce((sum, e) => sum + Number(e.amount), 0);
   },
 
   getYearlySpend(expenses: Expense[]): number {
-    const currentYear = new Date().getFullYear().toString();
+    const currentYear = this.getLocalDateString().slice(0, 4); // YYYY
     return expenses
       .filter((e) => e.date.startsWith(currentYear))
-      .reduce((sum, e) => sum + e.amount, 0);
+      .reduce((sum, e) => sum + Number(e.amount), 0);
   },
 
   getCategorySpending(expenses: Expense[], categoriesList: any[]): { name: string; amount: number; percentage: number; color: string; icon: string }[] {
-    const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
     if (total === 0) return [];
 
     const map: Record<string, number> = {};
     expenses.forEach((e) => {
-      map[e.category] = (map[e.category] || 0) + e.amount;
+      map[e.category] = (map[e.category] || 0) + Number(e.amount);
     });
 
     return Object.keys(map).map((catName) => {
@@ -72,7 +82,7 @@ export const expenseHelpers = {
       const expenseDate = new Date(e.date + 'T00:00:00');
       if (expenseDate >= sunday) {
         const dayIdx = expenseDate.getDay();
-        result[dayIdx].amount += e.amount;
+        result[dayIdx].amount += Number(e.amount);
       }
     });
 
@@ -89,7 +99,7 @@ export const expenseHelpers = {
       const expenseDate = new Date(e.date + 'T00:00:00');
       if (expenseDate.getFullYear() === currentYear) {
         const monthIdx = expenseDate.getMonth();
-        result[monthIdx].amount += e.amount;
+        result[monthIdx].amount += Number(e.amount);
       }
     });
 
@@ -101,7 +111,7 @@ export const expenseHelpers = {
 
   getSpendingInsights(expenses: Expense[], budgets: Budget[]): SpendingInsight[] {
     const insights: SpendingInsight[] = [];
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.getLocalDateString();
 
     if (expenses.length === 0) {
       insights.push({
@@ -115,13 +125,13 @@ export const expenseHelpers = {
     }
 
     // 1. Largest transaction alert
-    const sorted = [...expenses].sort((a, b) => b.amount - a.amount);
+    const sorted = [...expenses].sort((a, b) => Number(b.amount) - Number(a.amount));
     const largest = sorted[0];
-    if (largest.amount > 100) {
+    if (Number(largest.amount) > 100) {
       insights.push({
         id: 'largest_spend',
         title: 'High Single Spend detected',
-        description: `Your largest single expense was $${largest.amount.toFixed(2)} at ${largest.merchant} under ${largest.category}.`,
+        description: `Your largest single expense was $${Number(largest.amount).toFixed(2)} at ${largest.merchant} under ${largest.category}.`,
         type: 'warning',
         date: today,
       });
@@ -174,7 +184,7 @@ export const expenseHelpers = {
       insights.push({
         id: 'category_concentration',
         title: `Heavy ${catList[0].name} Spending`,
-        description: `${catList[0].percentage}% of your expenses are concentrated in "${catList[0].name}" ($${catList[0].amount.toFixed(2)}).`,
+        description: `${catList[0].percentage}% of your expenses are concentrated in "${catList[0].name}" ($${Number(catList[0].amount).toFixed(2)}).`,
         type: 'info',
         date: today,
       });
