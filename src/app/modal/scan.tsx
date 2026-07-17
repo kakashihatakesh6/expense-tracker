@@ -331,30 +331,25 @@ export default function OCRScanModal() {
             </View>
           </View>
 
-          {/* Total Detected Card */}
-          <View style={styles.detectedStatusCard}>
-            <View style={styles.detectedTextColumn}>
-              <Text style={styles.detectedHeading}>Total Detected (INR)</Text>
-              <Text style={styles.detectedScanningLabel}>active scanning</Text>
+          {/* AI Intro Feature Card */}
+          <View style={styles.aiIntroCard}>
+            <View style={styles.aiIntroHeaderRow}>
+              <Sparkles size={14} color="#818CF8" style={{ marginRight: 6 }} />
+              <Text style={styles.aiIntroSuperTitle}>POWERED BY SMART OCR</Text>
             </View>
-            <View style={styles.detectedAmountBadge}>
-              <Text style={styles.detectedAmountText}>₹ 1,371.00</Text>
-            </View>
-          </View>
-
-          {/* Progress Indicators */}
-          <View style={styles.scanningProgressSection}>
-            <View style={styles.progressItem}>
-              <Text style={styles.progressTextLabel}>Detecting Date</Text>
-              <View style={styles.progressBarTrack}>
-                <View style={[styles.progressBarIndicator, { width: '70%' }]} />
+            <Text style={styles.aiIntroTitle}>Instant Expense Logging</Text>
+            <Text style={styles.aiIntroDesc}>
+              Position your receipt inside the frame. The AI scanner automatically extracts details, dates, and matches categories in seconds.
+            </Text>
+            <View style={styles.highlightPillsRow}>
+              <View style={styles.highlightPill}>
+                <Text style={styles.highlightPillText}>🧾 Real-time OCR</Text>
               </View>
-            </View>
-
-            <View style={styles.progressItem}>
-              <Text style={styles.progressTextLabel}>Categorizing Expense...</Text>
-              <View style={styles.progressBarTrack}>
-                <View style={[styles.progressBarIndicator, { width: '45%' }]} />
+              <View style={styles.highlightPill}>
+                <Text style={styles.highlightPillText}>🤖 AI Match</Text>
+              </View>
+              <View style={styles.highlightPill}>
+                <Text style={styles.highlightPillText}>⚡ Instant Log</Text>
               </View>
             </View>
           </View>
@@ -1060,71 +1055,58 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  detectedStatusCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  aiIntroCard: {
     width: '90%',
-    borderWidth: 1.5,
-    borderColor: '#34D399',
+    backgroundColor: '#0F172A',
     borderRadius: 16,
-    backgroundColor: '#0A1E17',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    padding: 16,
     marginTop: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  detectedTextColumn: {
-    flexDirection: 'column',
+  aiIntroHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
   },
-  detectedHeading: {
-    color: '#FFF',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  detectedScanningLabel: {
-    color: '#34D399',
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  detectedAmountBadge: {
-    backgroundColor: 'rgba(52, 211, 153, 0.15)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-  },
-  detectedAmountText: {
-    color: '#34D399',
-    fontSize: 14,
+  aiIntroSuperTitle: {
+    color: '#818CF8',
+    fontSize: 9,
     fontWeight: '800',
+    letterSpacing: 0.75,
   },
-  scanningProgressSection: {
-    width: '90%',
-    marginTop: 16,
+  aiIntroTitle: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  aiIntroDesc: {
+    color: '#94A3B8',
+    fontSize: 11.5,
+    lineHeight: 16,
+    marginBottom: 12,
+  },
+  highlightPillsRow: {
+    flexDirection: 'row',
     gap: 8,
   },
-  progressItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  highlightPill: {
+    backgroundColor: 'rgba(129, 140, 248, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(129, 140, 248, 0.2)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
   },
-  progressTextLabel: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '600',
-    width: '40%',
-  },
-  progressBarTrack: {
-    flex: 1,
-    height: 6,
-    backgroundColor: '#1E293B',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressBarIndicator: {
-    height: '100%',
-    backgroundColor: '#34D399',
-    borderRadius: 3,
+  highlightPillText: {
+    color: '#E2E8F0',
+    fontSize: 10,
+    fontWeight: '700',
   },
   aiGlowTab: {
     flexDirection: 'row',
