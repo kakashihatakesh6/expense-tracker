@@ -8,10 +8,13 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
+  Image,
+  Modal,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { useExpenseStore } from '../../store/expenseStore';
 import { useSettingsStore } from '../../store/settingsStore';
+import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { expenseHelpers } from '../../utils/expenseHelpers';
 import { Card } from '../../components/Card';
@@ -29,26 +32,54 @@ import {
   CheckCircle,
   AlertTriangle,
   BadgeAlert,
+  User,
+  LogOut,
+  X,
+  ChevronRight,
+  Mail,
 } from 'lucide-react-native';
 import { TransactionDetailModal } from '../../components/TransactionDetailModal';
 import { Expense } from '../../types';
 
 export default function Dashboard() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { colors, isDark } = useTheme();
   
   const { expenses, budgets, categories, fetchExpenses, fetchCategories, fetchBudgets, addExpense, saveBudget } =
     useExpenseStore();
   const { settings } = useSettingsStore();
 
+  const user = useAuthStore((state) => state.user);
+  const signOut = useAuthStore((state) => state.signOut);
+
   const [activeTab, setActiveTab] = useState<'today' | 'week' | 'month' | 'year'>('month');
   const [selectedTransaction, setSelectedTransaction] = useState<Expense | null>(null);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
 
   useEffect(() => {
     fetchExpenses();
     fetchCategories();
     fetchBudgets();
   }, []);
+
+  useEffect(() => {
+    const avatarUrl = user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          style={styles.headerProfileBtn}
+          onPress={() => setProfileModalVisible(true)}
+          activeOpacity={0.8}
+        >
+          <Image
+            source={{ uri: avatarUrl }}
+            style={[styles.headerProfilePic, { borderColor: colors.border }]}
+          />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, user, colors]);
 
   const todaySpend = expenseHelpers.getTodaySpend(expenses);
   const weeklySpend = expenseHelpers.getWeeklySpend(expenses);
@@ -403,6 +434,139 @@ export default function Dashboard() {
         transaction={selectedTransaction}
         onClose={() => setSelectedTransaction(null)}
       />
+
+      {/* User Profile Modal */}
+      <Modal
+        visible={profileModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setProfileModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setProfileModalVisible(false)} />
+          <View
+            style={[
+              styles.profileModalContainer,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                shadowColor: isDark ? '#000' : 'rgba(99, 102, 241, 0.15)',
+              },
+            ]}
+          >
+            {/* Header */}
+            <View style={styles.profileModalHeader}>
+              <Text style={[styles.profileModalHeaderTitle, { color: colors.text }]}>User Profile</Text>
+              <TouchableOpacity
+                style={[styles.profileCloseBtn, { backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }]}
+                onPress={() => setProfileModalVisible(false)}
+              >
+                <X size={18} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Profile Info */}
+            <View style={styles.profileHero}>
+              <Image
+                source={{ uri: user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150' }}
+                style={[styles.profileAvatar, { borderColor: colors.primary }]}
+              />
+              <Text style={[styles.profileName, { color: colors.text }]}>
+                {user?.user_metadata?.username || user?.email?.split('@')[0] || 'Expense User'}
+              </Text>
+              <View style={[styles.profileBadge, { backgroundColor: colors.primaryLight }]}>
+                <Sparkles size={10} color={colors.primary} style={{ marginRight: 4 }} />
+                <Text style={[styles.profileBadgeText, { color: colors.primary }]}>PRO MEMBER</Text>
+              </View>
+            </View>
+
+            {/* Account Details Box */}
+            <View style={[styles.profileStatsBox, { borderColor: colors.border }]}>
+              <View style={styles.profileStatItem}>
+                <Text style={[styles.profileStatVal, { color: colors.text }]}>{expenses.length}</Text>
+                <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>Expenses</Text>
+              </View>
+              <View style={[styles.profileStatDivider, { backgroundColor: colors.border }]} />
+              <View style={styles.profileStatItem}>
+                <Text style={[styles.profileStatVal, { color: colors.text }]}>
+                  {settings.currency === 'INR' ? '₹' : '$'}{monthlySpend.toFixed(0)}
+                </Text>
+                <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>This Month</Text>
+              </View>
+            </View>
+
+            {/* Menu List */}
+            <View style={styles.profileMenu}>
+              <View style={styles.profileMenuItem}>
+                <View style={[styles.menuItemIconBg, { backgroundColor: colors.primaryLight }]}>
+                  <Mail size={16} color={colors.primary} />
+                </View>
+                <View style={styles.menuItemContent}>
+                  <Text style={[styles.menuItemTitle, { color: colors.textSecondary }]}>Email Address</Text>
+                  <Text style={[styles.menuItemVal, { color: colors.text }]} numberOfLines={1}>{user?.email || 'N/A'}</Text>
+                </View>
+              </View>
+
+              <View style={[styles.profileMenuDivider, { backgroundColor: colors.border }]} />
+
+              <TouchableOpacity
+                style={styles.profileMenuItemInteractive}
+                onPress={() => {
+                  setProfileModalVisible(false);
+                  router.push('/modal/budget');
+                }}
+              >
+                <View style={[styles.menuItemIconBg, { backgroundColor: colors.primaryLight }]}>
+                  <TrendingUp size={16} color={colors.primary} />
+                </View>
+                <Text style={[styles.menuItemInteractiveText, { color: colors.text }]}>Manage Budgets</Text>
+                <ChevronRight size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
+
+              <View style={[styles.profileMenuDivider, { backgroundColor: colors.border }]} />
+
+              <TouchableOpacity
+                style={styles.profileMenuItemInteractive}
+                onPress={() => {
+                  setProfileModalVisible(false);
+                  router.push('/(tabs)/settings');
+                }}
+              >
+                <View style={[styles.menuItemIconBg, { backgroundColor: colors.primaryLight }]}>
+                  <User size={16} color={colors.primary} />
+                </View>
+                <Text style={[styles.menuItemInteractiveText, { color: colors.text }]}>Account Preferences</Text>
+                <ChevronRight size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Sign Out Button */}
+            <TouchableOpacity
+              style={[styles.profileLogoutBtn, { backgroundColor: colors.danger }]}
+              onPress={() => {
+                setProfileModalVisible(false);
+                Alert.alert(
+                  'Sign Out',
+                  'Are you sure you want to sign out of your account?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { 
+                      text: 'Sign Out', 
+                      style: 'destructive',
+                      onPress: async () => {
+                        await signOut();
+                      }
+                    }
+                  ]
+                );
+              }}
+            >
+              <LogOut size={16} color="#FFF" style={{ marginRight: 8 }} />
+              <Text style={styles.profileLogoutText}>Sign Out</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -635,5 +799,165 @@ const styles = StyleSheet.create({
   txAmount: {
     fontSize: 15,
     fontWeight: '800',
+  },
+  headerProfileBtn: {
+    marginRight: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  headerProfilePic: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  profileModalContainer: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 24,
+    elevation: 24,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+  },
+  profileModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  profileModalHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  profileCloseBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileHero: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  profileAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    marginBottom: 12,
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  profileBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  profileBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  profileStatsBox: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: 12,
+    marginVertical: 16,
+  },
+  profileStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  profileStatVal: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  profileStatLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  profileStatDivider: {
+    width: 1,
+    height: '100%',
+  },
+  profileMenu: {
+    marginBottom: 20,
+  },
+  profileMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  profileMenuItemInteractive: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  menuItemIconBg: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  menuItemContent: {
+    flex: 1,
+  },
+  menuItemTitle: {
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  menuItemVal: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 1,
+  },
+  menuItemInteractiveText: {
+    fontSize: 13,
+    fontWeight: '700',
+    flex: 1,
+  },
+  profileMenuDivider: {
+    height: 1,
+    width: '100%',
+  },
+  profileLogoutBtn: {
+    height: 44,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileLogoutText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
