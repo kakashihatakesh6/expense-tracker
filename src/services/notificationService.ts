@@ -1,16 +1,23 @@
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-// Configure default notification presentation options
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+let isHandlerSet = false;
+
+async function getNotifications() {
+  const Notifications = await import('expo-notifications');
+  if (!isHandlerSet) {
+    isHandlerSet = true;
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  }
+  return Notifications;
+}
 
 export const notificationService = {
   /**
@@ -19,6 +26,7 @@ export const notificationService = {
   async requestPermissions(): Promise<boolean> {
     if (Platform.OS === 'web') return false;
 
+    const Notifications = await getNotifications();
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
@@ -40,6 +48,7 @@ export const notificationService = {
       return undefined;
     }
 
+    const Notifications = await getNotifications();
     return await Notifications.scheduleNotificationAsync({
       content: {
         title,
@@ -60,6 +69,7 @@ export const notificationService = {
     // Cancel existing daily reminders first to avoid duplicates
     await this.cancelAllScheduledNotifications();
 
+    const Notifications = await getNotifications();
     return await Notifications.scheduleNotificationAsync({
       content: {
         title: 'Track Your Spending 💰',
@@ -79,6 +89,8 @@ export const notificationService = {
    */
   async cancelAllScheduledNotifications(): Promise<void> {
     if (Platform.OS === 'web') return;
+    const Notifications = await getNotifications();
     await Notifications.cancelAllScheduledNotificationsAsync();
   },
 };
+
