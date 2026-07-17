@@ -66,6 +66,15 @@ export default function Dashboard() {
   useEffect(() => {
     const avatarUrl = user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
     navigation.setOptions({
+      headerTitleAlign: 'left',
+      headerTitle: () => (
+        <View style={styles.headerTitleContainer}>
+          <Text style={[styles.headerTitleText, { color: colors.text }]}>Dashboard</Text>
+          <Text style={[styles.headerSubtitleText, { color: colors.textSecondary }]}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </Text>
+        </View>
+      ),
       headerRight: () => (
         <TouchableOpacity
           style={styles.headerProfileBtn}
@@ -799,6 +808,22 @@ const styles = StyleSheet.create({
   txAmount: {
     fontSize: 15,
     fontWeight: '800',
+  },
+  headerTitleContainer: {
+    paddingLeft: 4,
+    justifyContent: 'center',
+  },
+  headerTitleText: {
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -0.75,
+  },
+  headerSubtitleText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: 1,
   },
   headerProfileBtn: {
     marginRight: 16,
