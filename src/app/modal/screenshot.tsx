@@ -7,14 +7,17 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  TextInput,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { ocrService, OcrResult } from '../../services/ocrService';
+import { aiService } from '../../services/aiService';
 import { useExpenseStore } from '../../store/expenseStore';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/Card';
-import { Image as ImageIcon, Check, RefreshCw, Smartphone } from 'lucide-react-native';
+import { Image as ImageIcon, Check, RefreshCw, Smartphone, Sparkles } from 'lucide-react-native';
 
 export default function ScreenshotModal() {
   const router = useRouter();
@@ -22,19 +25,26 @@ export default function ScreenshotModal() {
   const { addExpense } = useExpenseStore();
 
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [presetName, setPresetName] = useState<string | undefined>(undefined);
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<OcrResult | null>(null);
 
-  const pickScreenshot = async (presetName?: string) => {
+  // Editable preview values
+  const [merchant, setMerchant] = useState('');
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('');
+  const [date, setDate] = useState('');
+  const [tax, setTax] = useState('');
+  const [transactionId, setTransactionId] = useState('');
+
+  const pickScreenshot = async (selectedPreset?: string) => {
     try {
-      setIsScanning(true);
       let uri = 'mock_upi_screenshot.png';
 
-      if (!presetName) {
+      if (!selectedPreset) {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
           Alert.alert('Permission Required', 'Cooperation needed to access gallery.');
-          setIsScanning(false);
           return;
         }
 
@@ -45,46 +55,74 @@ export default function ScreenshotModal() {
         });
 
         if (pickerResult.canceled || pickerResult.assets.length === 0) {
-          setIsScanning(false);
           return;
         }
 
         uri = pickerResult.assets[0].uri;
       } else {
-        uri = `mock_${presetName}_screenshot.png`;
+        uri = `mock_${selectedPreset}_screenshot.png`;
       }
 
       setImageUri(uri);
+      setPresetName(selectedPreset);
+    } catch (e: any) {
+      console.error(e);
+      Alert.alert('Selection Failed', e.message || 'Unable to select screenshot.');
+    }
+  };
 
-      // Perform transaction scan
+  const scanScreenshot = async () => {
+    if (!imageUri) return;
+    try {
+      setIsScanning(true);
+
+      // 1. Run OCR
       const detectedPreset = presetName || 'gpay_upi';
-      const ocrResult = await ocrService.extractReceipt(uri, detectedPreset);
+      const ocrResult = await ocrService.extractReceipt(imageUri, detectedPreset);
+      
+      // 2. Run AI Categorization on merchant name
+      const categoryResult = await aiService.classifyExpense(ocrResult.merchant);
 
       setResult(ocrResult);
+      setMerchant(ocrResult.merchant);
+      setAmount(ocrResult.amount.toString());
+      setCategory(categoryResult.category);
+      setDate(ocrResult.date);
+      setTax(ocrResult.tax ? ocrResult.tax.toString() : '0');
+      setTransactionId(ocrResult.transactionId || 'N/A');
+      
       setIsScanning(false);
     } catch (e: any) {
       console.error(e);
-      Alert.alert('Scan Failed', e.message || 'Unable to parse screenshot details.');
+      Alert.alert('Scan Failed', e.message || 'Failed to extract details from screenshot. Please try again.');
       setIsScanning(false);
       setImageUri(null);
       setResult(null);
     }
   };
 
-  const handleConfirm = () => {
-    if (!result) return;
+  const handleSaveExtracted = () => {
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      Alert.alert('Invalid Amount', 'Please set a valid positive amount.');
+      return;
+    }
+    if (!merchant.trim()) {
+      Alert.alert('Invalid Merchant', 'Merchant name is required.');
+      return;
+    }
 
     addExpense({
       id: `exp_${Date.now()}`,
-      amount: result.amount,
-      merchant: result.merchant,
-      category: 'Other', // default, user can edit in transactions
-      date: result.date,
-      time: result.time,
-      paymentMethod: result.paymentMethod,
-      currency: result.currency,
-      tax: 0,
-      notes: `Extracted from screenshot. Txn ID: ${result.transactionId || 'N/A'}`,
+      amount: parsedAmount,
+      merchant: merchant.trim(),
+      category,
+      date,
+      time: result?.time || new Date().toTimeString().slice(0, 5),
+      paymentMethod: result?.paymentMethod || 'UPI',
+      currency: result?.currency || 'INR',
+      tax: tax ? parseFloat(tax) : 0,
+      notes: `Extracted from screenshot. Txn ID: ${transactionId}`,
       receiptImage: imageUri || undefined,
     });
 
@@ -105,6 +143,7 @@ export default function ScreenshotModal() {
           <TouchableOpacity
             style={[styles.pickerBtn, { backgroundColor: colors.primary }]}
             onPress={() => pickScreenshot()}
+            activeOpacity={0.8}
           >
             <ImageIcon size={20} color="#FFF" style={{ marginRight: 8 }} />
             <Text style={styles.pickerBtnText}>Select Screenshot</Text>
@@ -118,6 +157,7 @@ export default function ScreenshotModal() {
                 key={preset}
                 style={[styles.demoBtn, { borderColor: colors.border }]}
                 onPress={() => pickScreenshot(preset)}
+                activeOpacity={0.7}
               >
                 <Text style={[styles.demoText, { color: colors.text }]}>
                   {preset.split('_')[0].toUpperCase()}
@@ -127,79 +167,158 @@ export default function ScreenshotModal() {
           </View>
         </View>
       ) : isScanning ? (
-        <View style={styles.loadingBox}>
+        <View style={styles.scanningOverlay}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.text }]}>Analyzing Screenshot pixels...</Text>
-          <Text style={[styles.loadingSub, { color: colors.textSecondary }]}>Extracting Transaction IDs and UPI details...</Text>
+          <Text style={[styles.scanningText, { color: colors.text }]}>Analyzing Screenshot pixels...</Text>
+          <Text style={[styles.scanningSub, { color: colors.textSecondary }]}>Extracting Transaction IDs and UPI details...</Text>
+        </View>
+      ) : !result ? (
+        <View style={styles.previewContainer}>
+          <Text style={[styles.previewTitle, { color: colors.text }]}>Confirm UPI Screenshot</Text>
+          <Text style={[styles.previewSubtitle, { color: colors.textSecondary }]}>
+            Review the captured screenshot image before scanning it with the AI OCR engine.
+          </Text>
+          
+          <View style={[styles.imageWrapper, { borderColor: colors.border }]}>
+            {presetName ? (
+              <Image 
+                source={
+                  presetName === 'gpay_upi' ? require('../../../assets/images/gpay_screenshot.png') :
+                  presetName === 'phonepe_upi' ? require('../../../assets/images/gpay_screenshot.png') :
+                  presetName === 'paytm_upi' ? require('../../../assets/images/gpay_screenshot.png') :
+                  require('../../../assets/images/gpay_screenshot.png')
+                }
+                style={styles.previewImage}
+                resizeMode="contain"
+              />
+            ) : (
+              <Image 
+                source={{ uri: imageUri || undefined }} 
+                style={styles.previewImage} 
+                resizeMode="contain"
+              />
+            )}
+          </View>
+
+          <View style={styles.previewActionBtnRow}>
+            <TouchableOpacity
+              style={[styles.retakeBtn, { borderColor: colors.border }]}
+              onPress={() => {
+                setImageUri(null);
+                setPresetName(undefined);
+              }}
+              activeOpacity={0.7}
+            >
+              <RefreshCw size={16} color={colors.text} style={{ marginRight: 6 }} />
+              <Text style={[styles.retakeBtnText, { color: colors.text }]}>Discard / Reselect</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.confirmBtn, { backgroundColor: colors.primary }]}
+              onPress={scanScreenshot}
+              activeOpacity={0.8}
+            >
+              <Sparkles size={16} color="#FFF" style={{ marginRight: 6 }} />
+              <Text style={styles.confirmBtnText}>Scan & Extract</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       ) : (
         result && (
-          <View style={styles.confirmBox}>
-            <Text style={[styles.confirmHeading, { color: colors.text }]}>Add this expense?</Text>
-            <Text style={[styles.confirmSub, { color: colors.textSecondary }]}>
-              We parsed the following details from your payment screenshot:
+          <View style={styles.resultsPanel}>
+            <Text style={[styles.previewHeading, { color: colors.text }]}>Review Extracted Details</Text>
+            <Text style={[styles.previewSubText, { color: colors.textSecondary }]}>
+              Double check and adjust values computed from payment screenshot below.
             </Text>
 
-            <Card style={styles.detailsCard}>
-              <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Amount</Text>
-                <Text style={[styles.detailVal, { color: colors.text, fontSize: 24, fontWeight: '800' }]}>
-                  {result.currency === 'INR' ? '₹' : '$'}
-                  {result.amount.toFixed(2)}
-                </Text>
+            {/* Form Fields */}
+            <Card style={styles.previewCard}>
+              <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>RECEIVER / MERCHANT</Text>
+              <TextInput
+                style={[styles.previewInput, { color: colors.text, borderColor: colors.border }]}
+                value={merchant}
+                onChangeText={setMerchant}
+              />
+
+              <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>AMOUNT</Text>
+              <TextInput
+                style={[styles.previewInput, { color: colors.text, borderColor: colors.border }]}
+                keyboardType="decimal-pad"
+                value={amount}
+                onChangeText={setAmount}
+              />
+
+              <View style={styles.rowFields}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>AI CATEGORY</Text>
+                  <View style={styles.aiTagRow}>
+                    <TextInput
+                      style={[styles.previewInput, { color: colors.text, borderColor: colors.border, flex: 1, marginBottom: 0 }]}
+                      value={category}
+                      onChangeText={setCategory}
+                    />
+                    <View style={[styles.sparkBg, { backgroundColor: colors.primaryLight }]}>
+                      <Sparkles size={14} color={colors.primary} />
+                    </View>
+                  </View>
+                </View>
               </View>
 
-              <View style={styles.divider} />
+              <Text style={[styles.fieldLabel, { color: colors.textSecondary, marginTop: 12 }]}>TRANSACTION ID</Text>
+              <TextInput
+                style={[styles.previewInput, { color: colors.text, borderColor: colors.border }]}
+                value={transactionId}
+                onChangeText={setTransactionId}
+              />
 
-              <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Receiver / Merchant</Text>
-                <Text style={[styles.detailVal, { color: colors.text }]}>{result.merchant}</Text>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Date & Time</Text>
-                <Text style={[styles.detailVal, { color: colors.text }]}>
-                  {result.date} @ {result.time}
-                </Text>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Transaction ID</Text>
-                <Text style={[styles.detailVal, { color: colors.text, fontSize: 11 }]}>
-                  {result.transactionId || 'N/A'}
-                </Text>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Payment Method</Text>
-                <Text style={[styles.detailVal, { color: colors.text }]}>{result.paymentMethod}</Text>
+              <View style={[styles.rowFields, { marginTop: 12 }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>DATE</Text>
+                  <TextInput
+                    style={[styles.previewInput, { color: colors.text, borderColor: colors.border }]}
+                    value={date}
+                    onChangeText={setDate}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>TAX</Text>
+                  <TextInput
+                    style={[styles.previewInput, { color: colors.text, borderColor: colors.border }]}
+                    value={tax}
+                    onChangeText={setTax}
+                  />
+                </View>
               </View>
             </Card>
 
-            <View style={styles.actionRow}>
+            {/* Confidence Score info */}
+            <View style={styles.confidenceRow}>
+              <Text style={[styles.confidenceText, { color: colors.textSecondary }]}>
+                OCR confidence score: {(result.confidence * 100).toFixed(0)}%
+              </Text>
+            </View>
+
+            {/* Action Row */}
+            <View style={styles.actionBtnRow}>
               <TouchableOpacity
-                style={[styles.rescanBtn, { borderColor: colors.border }]}
+                style={[styles.retakeBtn, { borderColor: colors.border }]}
                 onPress={() => {
                   setImageUri(null);
                   setResult(null);
                 }}
+                activeOpacity={0.7}
               >
                 <RefreshCw size={16} color={colors.text} style={{ marginRight: 6 }} />
-                <Text style={[styles.rescanBtnText, { color: colors.text }]}>Discard</Text>
+                <Text style={[styles.retakeBtnText, { color: colors.text }]}>Retake / Rescan</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: colors.primary }]}
-                onPress={handleConfirm}
+                style={[styles.confirmBtn, { backgroundColor: colors.primary }]}
+                onPress={handleSaveExtracted}
+                activeOpacity={0.8}
               >
                 <Check size={16} color="#FFF" style={{ marginRight: 6 }} />
-                <Text style={styles.saveBtnText}>Add Expense</Text>
+                <Text style={styles.confirmBtnText}>Save Expense</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -265,82 +384,138 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-  loadingBox: {
+  scanningOverlay: {
+    height: 400,
     alignItems: 'center',
-    padding: 40,
-    marginTop: 40,
+    justifyContent: 'center',
+    padding: 32,
   },
-  loadingText: {
+  scanningText: {
     fontSize: 16,
     fontWeight: '700',
-    marginTop: 16,
+    marginTop: 20,
   },
-  loadingSub: {
-    fontSize: 12,
+  scanningSub: {
+    fontSize: 13,
     marginTop: 4,
+    textAlign: 'center',
   },
-  confirmBox: {
+  previewContainer: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  previewTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  previewSubtitle: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 18,
+  },
+  imageWrapper: {
+    width: '100%',
+    height: 420,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+    backgroundColor: '#0F172A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  previewActionBtnRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  resultsPanel: {
     padding: 16,
   },
-  confirmHeading: {
+  previewHeading: {
     fontSize: 20,
     fontWeight: '700',
   },
-  confirmSub: {
+  previewSubText: {
     fontSize: 13,
     marginTop: 4,
     marginBottom: 16,
     lineHeight: 18,
   },
-  detailsCard: {
+  previewCard: {
     padding: 16,
-    marginBottom: 20,
   },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  detailLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  detailVal: {
-    fontSize: 13,
+  fieldLabel: {
+    fontSize: 9,
     fontWeight: '700',
-    textAlign: 'right',
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.02)',
+  previewInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    height: 40,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    marginBottom: 12,
   },
-  actionRow: {
+  rowFields: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  aiTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sparkBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confidenceRow: {
+    alignItems: 'center',
+    marginVertical: 12,
+  },
+  confidenceText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  actionBtnRow: {
     flexDirection: 'row',
     gap: 8,
   },
-  rescanBtn: {
+  retakeBtn: {
     flex: 1,
     borderWidth: 1,
-    height: 48,
+    height: 46,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rescanBtnText: {
+  retakeBtnText: {
     fontSize: 14,
     fontWeight: '700',
   },
-  saveBtn: {
+  confirmBtn: {
     flex: 1,
-    height: 48,
+    height: 46,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  saveBtnText: {
+  confirmBtnText: {
     color: '#FFF',
     fontSize: 14,
     fontWeight: '700',
