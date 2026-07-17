@@ -78,14 +78,11 @@ export default function Dashboard() {
       ),
       headerRight: () => (
         <TouchableOpacity
-          style={styles.headerProfileBtn}
+          style={[styles.headerProfileBtn, styles.headerAvatarContainer, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}
           onPress={() => setProfileModalVisible(true)}
           activeOpacity={0.8}
         >
-          <Image
-            source={{ uri: avatarUrl }}
-            style={[styles.headerProfilePic, { borderColor: colors.border }]}
-          />
+          <User size={16} color={colors.primary} />
         </TouchableOpacity>
       ),
     });
@@ -479,10 +476,9 @@ export default function Dashboard() {
 
             {/* Profile Info */}
             <View style={styles.profileHero}>
-              <Image
-                source={{ uri: user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150' }}
-                style={[styles.profileAvatar, { borderColor: colors.primary }]}
-              />
+              <View style={[styles.profileCommonAvatar, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}>
+                <User size={38} color={colors.primary} />
+              </View>
               <Text style={[styles.profileName, { color: colors.text }]}>
                 {user?.user_metadata?.username || user?.email?.split('@')[0] || 'Expense User'}
               </Text>
@@ -984,5 +980,22 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 14,
     fontWeight: '700',
+  },
+  headerAvatarContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileCommonAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
 });
