@@ -1,10 +1,35 @@
 import React from 'react';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
 import { LayoutDashboard, Receipt, TrendingUp, Settings as SettingsIcon } from 'lucide-react-native';
 
-export default function TabsLayout() {
+const TabIcon = ({ focused, icon: Icon, badge }: { focused: boolean; icon: any; badge?: boolean }) => {
   const { colors } = useTheme();
+  return (
+    <View style={focused ? [styles.activeIconWrapper, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }] : styles.inactiveIconWrapper}>
+      <Icon size={20} color={focused ? colors.primary : colors.textSecondary} />
+      {badge && <View style={styles.badgeDot} />}
+    </View>
+  );
+};
+
+const CustomTabBarButton = ({ children, onPress }: any) => {
+  return (
+    <TouchableOpacity
+      style={styles.customButtonContainer}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <View style={styles.customButton}>
+        <Text style={styles.customButtonText}>AI</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+export default function TabsLayout() {
+  const { colors, isDark } = useTheme();
 
   return (
     <Tabs
@@ -18,23 +43,25 @@ export default function TabsLayout() {
           borderBottomColor: colors.border,
         },
         headerTitleStyle: {
-          fontWeight: '700',
+          fontWeight: '900',
           fontSize: 20,
+          letterSpacing: -0.5,
         },
         headerTintColor: colors.text,
         tabBarStyle: {
-          backgroundColor: colors.card,
+          backgroundColor: '#0F172A', // Dark slate bottom tab bar
           borderTopWidth: 1,
-          borderTopColor: colors.border,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          borderTopColor: '#1E293B',
+          height: 72,
+          paddingBottom: 10,
+          paddingTop: 10,
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
+          fontSize: 11,
+          fontWeight: '700',
+          marginTop: 2,
         },
       }}
     >
@@ -43,7 +70,7 @@ export default function TabsLayout() {
         options={{
           title: 'Dashboard',
           tabBarLabel: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={LayoutDashboard} />,
         }}
       />
       <Tabs.Screen
@@ -51,7 +78,15 @@ export default function TabsLayout() {
         options={{
           title: 'Transactions',
           tabBarLabel: 'Expenses',
-          tabBarIcon: ({ color, size }) => <Receipt size={size} color={color} />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={Receipt} />,
+        }}
+      />
+      <Tabs.Screen
+        name="ai"
+        options={{
+          title: 'AI Smart Hub',
+          tabBarLabel: 'AI',
+          tabBarButton: (props) => <CustomTabBarButton {...props} />,
         }}
       />
       <Tabs.Screen
@@ -59,7 +94,7 @@ export default function TabsLayout() {
         options={{
           title: 'Analytics',
           tabBarLabel: 'Analytics',
-          tabBarIcon: ({ color, size }) => <TrendingUp size={size} color={color} />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={TrendingUp} />,
         }}
       />
       <Tabs.Screen
@@ -67,9 +102,64 @@ export default function TabsLayout() {
         options={{
           title: 'Settings',
           tabBarLabel: 'Settings',
-          tabBarIcon: ({ color, size }) => <SettingsIcon size={size} color={color} />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={SettingsIcon} badge={true} />,
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  activeIconWrapper: {
+    paddingVertical: 4,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  inactiveIconWrapper: {
+    paddingVertical: 4,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  badgeDot: {
+    position: 'absolute',
+    top: 0,
+    right: 8,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#EF4444', // Premium red dot
+  },
+  customButtonContainer: {
+    top: -15, // Elevates the AI button above the tab bar line
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 68,
+    height: 68,
+  },
+  customButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#070A13', // Deep dark blue
+    borderWidth: 2,
+    borderColor: '#312E81', // Glowing dark indigo
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#818CF8',
+    shadowOpacity: 0.35,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  customButtonText: {
+    color: '#818CF8', // Glowing indigo AI text
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+});
