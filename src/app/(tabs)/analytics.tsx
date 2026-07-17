@@ -88,16 +88,32 @@ export default function AnalyticsScreen() {
       ? expenseHelpers.getWeeklySpendingData(expenses)
       : expenseHelpers.getMonthlyTrendData(expenses);
 
+  const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
+
+  // Reset/default selected index when timePeriod or expenses change
+  useEffect(() => {
+    if (chartData.length > 0) {
+      const lastValIdx = [...chartData].reverse().findIndex((d) => d.amount > 0);
+      if (lastValIdx !== -1) {
+        setSelectedBarIndex(chartData.length - 1 - lastValIdx);
+      } else {
+        setSelectedBarIndex(chartData.length - 1);
+      }
+    } else {
+      setSelectedBarIndex(null);
+    }
+  }, [timePeriod, expenses]);
+
   const renderTrendChart = () => {
     if (expenses.length === 0) return null;
 
     const dataValues = chartData.map((d) => d.amount);
     const maxVal = Math.max(...dataValues, 100); // minimum scale of 100
     
-    const chartHeight = 160;
+    const chartHeight = 180;
     const chartWidth = SCREEN_WIDTH - 64; // considering margins
     const paddingBottom = 25;
-    const paddingTop = 15;
+    const paddingTop = 20;
     const barWidth = timePeriod === 'week' ? 24 : 32;
     const availableHeight = chartHeight - paddingTop - paddingBottom;
     const barGap = (chartWidth - barWidth * chartData.length) / (chartData.length + 1);
@@ -110,9 +126,19 @@ export default function AnalyticsScreen() {
               const x = barGap + i * (barWidth + barGap);
               const height = (d.amount / maxVal) * availableHeight;
               const y = chartHeight - paddingBottom - height;
+              const isSelected = i === selectedBarIndex;
 
               return (
                 <G key={i}>
+                  {/* Invisible background hit-box for easier tapping */}
+                  <Rect
+                    x={x - barGap / 2}
+                    y={0}
+                    width={barWidth + barGap}
+                    height={chartHeight - paddingBottom}
+                    fill="transparent"
+                    onPress={() => setSelectedBarIndex(i)}
+                  />
                   {/* Bar */}
                   <Rect
                     x={x}
@@ -121,16 +147,17 @@ export default function AnalyticsScreen() {
                     height={height}
                     rx={6}
                     fill={colors.primary}
-                    opacity={d.amount > 0 ? 1 : 0.15}
+                    opacity={d.amount > 0 ? (isSelected ? 1 : 0.45) : 0.12}
+                    onPress={() => setSelectedBarIndex(i)}
                   />
-                  {/* Amount label on top of non-zero bars */}
-                  {d.amount > 0 && (
+                  {/* Amount label on top of selected bar */}
+                  {isSelected && d.amount > 0 && (
                     <SvgText
                       x={x + barWidth / 2}
-                      y={y - 4}
-                      fontSize="9"
-                      fontWeight="bold"
-                      fill={colors.text}
+                      y={y - 6}
+                      fontSize="10"
+                      fontWeight="800"
+                      fill={colors.primary}
                       textAnchor="middle"
                     >
                       {settings.currency === 'INR' ? '₹' : '$'}
@@ -212,6 +239,19 @@ export default function AnalyticsScreen() {
 
           {/* Trend Chart Card */}
           <Card style={styles.chartCard} glassmorphism>
+            {selectedBarIndex !== null && chartData[selectedBarIndex] && (
+              <View style={styles.selectedDetailsContainer}>
+                <Text style={[styles.selectedDetailsPeriod, { color: colors.textSecondary }]}>
+                  {timePeriod === 'week'
+                    ? `Spend on ${(chartData[selectedBarIndex] as any).day}`
+                    : `Spend in ${(chartData[selectedBarIndex] as any).month}`}
+                </Text>
+                <Text style={[styles.selectedDetailsAmount, { color: colors.text }]}>
+                  {settings.currency === 'INR' ? '₹' : '$'}
+                  {chartData[selectedBarIndex].amount.toFixed(2)}
+                </Text>
+              </View>
+            )}
             {renderTrendChart()}
           </Card>
 
@@ -401,5 +441,22 @@ const styles = StyleSheet.create({
   progFill: {
     height: '100%',
     borderRadius: 4,
+  },
+  selectedDetailsContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+    height: 48,
+    justifyContent: 'center',
+  },
+  selectedDetailsPeriod: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  selectedDetailsAmount: {
+    fontSize: 22,
+    fontWeight: '800',
+    marginTop: 2,
   },
 });

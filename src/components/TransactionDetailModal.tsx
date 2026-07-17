@@ -80,8 +80,9 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
       transparent={true}
       onRequestClose={onClose}
     >
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable
+      <View style={styles.overlay}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+        <View
           style={[
             styles.modalContainer,
             {
@@ -90,7 +91,6 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
               shadowColor: isDark ? '#000' : 'rgba(99, 102, 241, 0.15)',
             },
           ]}
-          onPress={(e) => e.stopPropagation()} // Prevents clicks inside the modal from closing it
         >
           {/* Top Grab Indicator */}
           <View style={[styles.grabIndicator, { backgroundColor: colors.border }]} />
@@ -110,6 +110,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
 
           <ScrollView
             showsVerticalScrollIndicator={false}
+            style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
           >
             {/* Amount & Merchant Hero Section */}
@@ -241,8 +242,8 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
               <Text style={styles.editBtnText}>Edit Transaction</Text>
             </TouchableOpacity>
           </View>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 };
@@ -250,8 +251,15 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'flex-end',
+  },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
   modalContainer: {
     maxHeight: SCREEN_HEIGHT * 0.85,
@@ -263,6 +271,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 20,
+  },
+  scrollView: {
+    flexShrink: 1,
   },
   grabIndicator: {
     width: 44,
