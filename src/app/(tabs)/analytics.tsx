@@ -160,7 +160,7 @@ export default function AnalyticsScreen() {
                       fill={colors.primary}
                       textAnchor="middle"
                     >
-                      {settings.currency === 'INR' ? '₹' : '$'}
+                      {/* {expenseHelpers.getCurrencySymbol(settings.currency)} */}
                       {d.amount.toFixed(0)}
                     </SvgText>
                   )}
@@ -247,7 +247,7 @@ export default function AnalyticsScreen() {
                     : `Spend in ${(chartData[selectedBarIndex] as any).month}`}
                 </Text>
                 <Text style={[styles.selectedDetailsAmount, { color: colors.text }]}>
-                  {settings.currency === 'INR' ? '₹' : '$'}
+                  {expenseHelpers.getCurrencySymbol(settings.currency)}
                   {chartData[selectedBarIndex].amount.toFixed(2)}
                 </Text>
               </View>
@@ -262,7 +262,7 @@ export default function AnalyticsScreen() {
               <Wallet size={20} color={colors.primary} />
               <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Average Spend</Text>
               <Text style={[styles.cardVal, { color: colors.text }]}>
-                {settings.currency === 'INR' ? '₹' : '$'}
+                {expenseHelpers.getCurrencySymbol(settings.currency)}
                 {averageSpend.toFixed(2)}
               </Text>
             </Card>
@@ -271,7 +271,7 @@ export default function AnalyticsScreen() {
               <Award size={20} color={colors.primary} />
               <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Largest Expense</Text>
               <Text style={[styles.cardVal, { color: colors.text }]} numberOfLines={1}>
-                {settings.currency === 'INR' ? '₹' : '$'}
+                {expenseHelpers.getCurrencySymbol(settings.currency)}
                 {largestExpense ? largestExpense.amount.toFixed(0) : '0'}
               </Text>
               {largestExpense && (
@@ -288,7 +288,7 @@ export default function AnalyticsScreen() {
               <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Peak Day</Text>
               <Text style={[styles.cardVal, { color: colors.text }]} numberOfLines={1}>
                 {highestSpendingDay
-                  ? `${settings.currency === 'INR' ? '₹' : '$'}${highestSpendingDay.amount.toFixed(0)}`
+                  ? `${expenseHelpers.getCurrencySymbol(settings.currency)}${highestSpendingDay.amount.toFixed(0)}`
                   : 'N/A'}
               </Text>
               {highestSpendingDay && (
@@ -306,7 +306,7 @@ export default function AnalyticsScreen() {
               </Text>
               {topMerchants.length > 0 && (
                 <Text style={[styles.gridCardSub, { color: colors.textSecondary }]}>
-                  Spent {settings.currency === 'INR' ? '₹' : '$'}
+                  Spent {expenseHelpers.getCurrencySymbol(settings.currency)}
                   {topMerchants[0].total.toFixed(0)}
                 </Text>
               )}
@@ -321,7 +321,7 @@ export default function AnalyticsScreen() {
                 <View style={styles.catHeader}>
                   <Text style={[styles.catName, { color: colors.text }]}>{cat.name}</Text>
                   <Text style={[styles.catAmount, { color: colors.text }]}>
-                    {settings.currency === 'INR' ? '₹' : '$'}
+                    {expenseHelpers.getCurrencySymbol(settings.currency)}
                     {cat.amount.toFixed(2)} ({cat.percentage}%)
                   </Text>
                 </View>

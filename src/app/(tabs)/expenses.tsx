@@ -26,6 +26,7 @@ import {
 } from 'lucide-react-native';
 import { TransactionDetailModal } from '../../components/TransactionDetailModal';
 import { Expense } from '../../types';
+import { expenseHelpers } from '../../utils/expenseHelpers';
 
 export default function ExpensesList() {
   const router = useRouter();
@@ -80,7 +81,7 @@ export default function ExpensesList() {
   const handleDelete = (id: string, merchant: string) => {
     Alert.alert(
       'Delete Transaction',
-      `Are you sure you want to delete the expense of $${expenses.find(e => e.id === id)?.amount.toFixed(2)} at ${merchant}?`,
+      `Are you sure you want to delete the expense of ${expenseHelpers.getCurrencySymbol(settings.currency)}${expenses.find(e => e.id === id)?.amount.toFixed(2)} at ${merchant}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -269,7 +270,7 @@ export default function ExpensesList() {
                       </View>
                       <View style={styles.amountCol}>
                         <Text style={[styles.txAmount, { color: colors.text }]}>
-                          {settings.currency === 'INR' ? '₹' : '$'}
+                          {expenseHelpers.getCurrencySymbol(settings.currency)}
                           {item.amount.toFixed(2)}
                         </Text>
                         <View style={styles.dateBadge}>

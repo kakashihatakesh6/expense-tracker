@@ -139,7 +139,7 @@ export default function AddExpenseModal() {
       if (monthlySpend > overallBudget.amount) {
         notificationService.sendImmediateNotification(
           '🚨 Monthly Budget Exceeded!',
-          `Your total spending ($${monthlySpend.toFixed(2)}) has gone over your monthly budget limit of $${overallBudget.amount.toFixed(2)}.`
+          `Your total spending (${expenseHelpers.getCurrencySymbol(settings.currency)}${monthlySpend.toFixed(2)}) has gone over your monthly budget limit of ${expenseHelpers.getCurrencySymbol(settings.currency)}${overallBudget.amount.toFixed(2)}.`
         );
       }
     }
@@ -154,7 +154,7 @@ export default function AddExpenseModal() {
       if (catSpend > catBudget.amount) {
         notificationService.sendImmediateNotification(
           `🚨 Category Limit Exceeded: ${itemCategory}`,
-          `Your ${itemCategory} spending ($${catSpend.toFixed(2)}) has gone over your set category monthly limit ($${catBudget.amount.toFixed(2)}).`
+          `Your ${itemCategory} spending (${expenseHelpers.getCurrencySymbol(settings.currency)}${catSpend.toFixed(2)}) has gone over your set category monthly limit (${expenseHelpers.getCurrencySymbol(settings.currency)}${catBudget.amount.toFixed(2)}).`
         );
       }
     }
@@ -191,7 +191,7 @@ export default function AddExpenseModal() {
           <Text style={[styles.inputHeading, { color: colors.textSecondary }]}>EXPENSE AMOUNT</Text>
           <View style={styles.amountInputRow}>
             <Text style={[styles.currencyPrefix, { color: colors.text }]}>
-              {settings.currency === 'INR' ? '₹' : '$'}
+              {expenseHelpers.getCurrencySymbol(settings.currency)}
             </Text>
             <TextInput
               style={[styles.amountInput, { color: colors.text }]}

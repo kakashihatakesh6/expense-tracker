@@ -106,7 +106,7 @@ export default function Dashboard() {
     budgets.find((b) => b.category === 'All' && b.period === 'monthly')?.amount || 0;
 
   const recentExpenses = expenses.slice(0, 4);
-  const insights = expenseHelpers.getSpendingInsights(expenses, budgets);
+  const insights = expenseHelpers.getSpendingInsights(expenses, budgets, settings.currency);
 
   const getCategoryColor = (catName: string) => {
     return categories.find((c) => c.name === catName)?.color || '#9CA3AF';
@@ -115,7 +115,7 @@ export default function Dashboard() {
   const seedSampleData = () => {
     Alert.alert(
       'Seed Sample Data',
-      'This will populate your database with 8 mock transactions and a monthly budget of $1200 so you can test all features.',
+      'This will populate your database with 8 mock transactions and a monthly budget of ₹1200 so you can test all features.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -270,7 +270,7 @@ export default function Dashboard() {
             TOTAL SPENDING ({activeTab.toUpperCase()})
           </Text>
           <Text style={[styles.spendAmount, { color: colors.text }]}>
-            {settings.currency === 'INR' ? '₹' : '$'}
+            {expenseHelpers.getCurrencySymbol(settings.currency)}
             {activeSpend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
           {expenses.length > 0 && renderMiniCategoryChart()}
@@ -317,8 +317,8 @@ export default function Dashboard() {
             <View>
               <Text style={[styles.budgetTitle, { color: colors.text }]}>Monthly Budget Goal</Text>
               <Text style={[styles.budgetSub, { color: colors.textSecondary }]}>
-                {settings.currency === 'INR' ? '₹' : '$'}
-                {monthlySpend.toFixed(0)} of {settings.currency === 'INR' ? '₹' : '$'}
+                {expenseHelpers.getCurrencySymbol(settings.currency)}
+                {monthlySpend.toFixed(0)} of {expenseHelpers.getCurrencySymbol(settings.currency)}
                 {currentMonthBudget.toFixed(0)} used
               </Text>
             </View>
@@ -343,7 +343,7 @@ export default function Dashboard() {
             <View style={styles.budgetAlertTextRow}>
               <BadgeAlert size={14} color={colors.danger} />
               <Text style={[styles.budgetAlertText, { color: colors.danger }]}>
-                Budget limit exceeded by {settings.currency === 'INR' ? '₹' : '$'}
+                Budget limit exceeded by {expenseHelpers.getCurrencySymbol(settings.currency)}
                 {(monthlySpend - currentMonthBudget).toFixed(2)}!
               </Text>
             </View>
@@ -429,7 +429,7 @@ export default function Dashboard() {
                     </Text>
                   </View>
                   <Text style={[styles.txAmount, { color: colors.text }]}>
-                    {settings.currency === 'INR' ? '₹' : '$'}
+                    {expenseHelpers.getCurrencySymbol(settings.currency)}
                     {expense.amount.toFixed(2)}
                   </Text>
                 </View>
@@ -497,7 +497,7 @@ export default function Dashboard() {
               <View style={[styles.profileStatDivider, { backgroundColor: colors.border }]} />
               <View style={styles.profileStatItem}>
                 <Text style={[styles.profileStatVal, { color: colors.text }]}>
-                  {settings.currency === 'INR' ? '₹' : '$'}{monthlySpend.toFixed(0)}
+                  {expenseHelpers.getCurrencySymbol(settings.currency)}{monthlySpend.toFixed(0)}
                 </Text>
                 <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>This Month</Text>
               </View>

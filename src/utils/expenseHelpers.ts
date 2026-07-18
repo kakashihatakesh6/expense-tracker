@@ -1,6 +1,20 @@
 import { Expense, Budget, SpendingInsight } from '../types';
 
 export const expenseHelpers = {
+  getCurrencySymbol(currency: string = 'INR'): string {
+    switch (currency) {
+      case 'USD':
+        return '$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'INR':
+      default:
+        return '₹';
+    }
+  },
+
   getLocalDateString(d: Date = new Date()): string {
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -109,9 +123,10 @@ export const expenseHelpers = {
     return result.slice(startIndex, currentMonthIdx + 1);
   },
 
-  getSpendingInsights(expenses: Expense[], budgets: Budget[]): SpendingInsight[] {
+  getSpendingInsights(expenses: Expense[], budgets: Budget[], currency: string = 'INR'): SpendingInsight[] {
     const insights: SpendingInsight[] = [];
     const today = this.getLocalDateString();
+    const symbol = this.getCurrencySymbol(currency);
 
     if (expenses.length === 0) {
       insights.push({
@@ -131,7 +146,7 @@ export const expenseHelpers = {
       insights.push({
         id: 'largest_spend',
         title: 'High Single Spend detected',
-        description: `Your largest single expense was $${Number(largest.amount).toFixed(2)} at ${largest.merchant} under ${largest.category}.`,
+        description: `Your largest single expense was ${symbol}${Number(largest.amount).toFixed(2)} at ${largest.merchant} under ${largest.category}.`,
         type: 'warning',
         date: today,
       });
@@ -147,7 +162,7 @@ export const expenseHelpers = {
         insights.push({
           id: 'budget_exceeded',
           title: 'Monthly Limit Exceeded!',
-          description: `You have spent $${monthlySpend.toFixed(2)}, which is ${(pct - 100).toFixed(0)}% over your total monthly budget of $${totalBudget.toFixed(2)}.`,
+          description: `You have spent ${symbol}${monthlySpend.toFixed(2)}, which is ${(pct - 100).toFixed(0)}% over your total monthly budget of ${symbol}${totalBudget.toFixed(2)}.`,
           type: 'warning',
           date: today,
         });
@@ -155,7 +170,7 @@ export const expenseHelpers = {
         insights.push({
           id: 'budget_alert',
           title: 'Nearing Budget Limit',
-          description: `You have used ${pct.toFixed(0)}% of your monthly budget ($${monthlySpend.toFixed(2)} of $${totalBudget.toFixed(2)}).`,
+          description: `You have used ${pct.toFixed(0)}% of your monthly budget (${symbol}${monthlySpend.toFixed(2)} of ${symbol}${totalBudget.toFixed(2)}).`,
           type: 'warning',
           date: today,
         });
@@ -184,7 +199,7 @@ export const expenseHelpers = {
       insights.push({
         id: 'category_concentration',
         title: `Heavy ${catList[0].name} Spending`,
-        description: `${catList[0].percentage}% of your expenses are concentrated in "${catList[0].name}" ($${Number(catList[0].amount).toFixed(2)}).`,
+        description: `${catList[0].percentage}% of your expenses are concentrated in "${catList[0].name}" (${symbol}${Number(catList[0].amount).toFixed(2)}).`,
         type: 'info',
         date: today,
       });

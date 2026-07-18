@@ -15,6 +15,7 @@ import { useSettingsStore } from '../../store/settingsStore';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/Card';
 import { Plus, Trash, Check, Settings } from 'lucide-react-native';
+import { expenseHelpers } from '../../utils/expenseHelpers';
 
 export default function BudgetModal() {
   const router = useRouter();
@@ -103,7 +104,7 @@ export default function BudgetModal() {
           <Text style={[styles.inputHeading, { color: colors.textSecondary }]}>BUDGET LIMIT AMOUNT</Text>
           <View style={[styles.amountInputRow, { borderColor: colors.border }]}>
             <Text style={[styles.currencyPrefix, { color: colors.text }]}>
-              {settings.currency === 'INR' ? '₹' : '$'}
+              {expenseHelpers.getCurrencySymbol(settings.currency)}
             </Text>
             <TextInput
               style={[styles.amountInput, { color: colors.text }]}
@@ -180,7 +181,7 @@ export default function BudgetModal() {
                   </View>
                   <View style={styles.rightActionRow}>
                     <Text style={[styles.budgetLimitVal, { color: colors.text }]}>
-                      {settings.currency === 'INR' ? '₹' : '$'}
+                      {expenseHelpers.getCurrencySymbol(settings.currency)}
                       {b.amount.toFixed(0)}
                     </Text>
                     <TouchableOpacity

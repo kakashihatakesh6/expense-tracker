@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { Expense } from '../types';
 import { useTheme } from '../hooks/useTheme';
 import { useSettingsStore } from '../store/settingsStore';
+import { expenseHelpers } from '../utils/expenseHelpers';
 import {
   X,
   Calendar,
@@ -116,7 +117,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             {/* Amount & Merchant Hero Section */}
             <View style={styles.heroSection}>
               <Text style={[styles.amountText, { color: colors.text }]}>
-                {transaction.currency === 'INR' || settings.currency === 'INR' ? '₹' : '$'}
+                {expenseHelpers.getCurrencySymbol(transaction.currency || settings.currency)}
                 {Number(transaction.amount).toFixed(2)}
               </Text>
               <Text style={[styles.merchantText, { color: colors.text }]} numberOfLines={2}>

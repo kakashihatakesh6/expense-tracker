@@ -25,7 +25,7 @@ import {
   Upload,
   Cpu,
   Info,
-  DollarSign,
+  IndianRupee,
   LogOut,
 } from 'lucide-react-native';
 
@@ -182,7 +182,7 @@ export default function SettingsScreen() {
 
           <TouchableOpacity style={styles.row} onPress={selectCurrency} activeOpacity={0.7}>
             <View style={[styles.rowIconBg, { backgroundColor: colors.primaryLight }]}>
-              <DollarSign size={20} color={colors.primary} />
+              <IndianRupee size={20} color={colors.primary} />
             </View>
             <View style={styles.rowInfo}>
               <Text style={[styles.rowLabel, { color: colors.text }]}>Currency Symbol</Text>

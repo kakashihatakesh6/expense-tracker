@@ -208,7 +208,7 @@ export const expenseRepository = {
       const settingsMap = data ? JSON.parse(data) : {};
       return {
         theme: (settingsMap.theme as 'light' | 'dark' | 'system') || 'system',
-        currency: settingsMap.currency || 'USD',
+        currency: settingsMap.currency || 'INR',
         notificationsEnabled: settingsMap.notificationsEnabled === 'true' || settingsMap.notificationsEnabled === true,
         ocrEngine: (settingsMap.ocrEngine as 'mock' | 'cloud') || 'mock',
         aiCategorizationEnabled: settingsMap.aiCategorizationEnabled === 'true' || settingsMap.aiCategorizationEnabled === true,
@@ -219,7 +219,7 @@ export const expenseRepository = {
     const db = getDatabase();
     const settings: Settings = {
       theme: 'system',
-      currency: 'USD',
+      currency: 'INR',
       notificationsEnabled: true,
       ocrEngine: 'mock',
       aiCategorizationEnabled: true,

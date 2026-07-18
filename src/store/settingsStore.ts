@@ -16,7 +16,7 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>((set) => ({
   settings: {
     theme: 'system',
-    currency: 'USD',
+    currency: 'INR',
     notificationsEnabled: true,
     ocrEngine: 'mock',
     aiCategorizationEnabled: true,
