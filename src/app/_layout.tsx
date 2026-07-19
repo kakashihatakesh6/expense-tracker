@@ -7,6 +7,7 @@ import { useSettingsStore } from '../store/settingsStore';
 import { useExpenseStore } from '../store/expenseStore';
 import { useAuthStore } from '../store/authStore';
 import { useTheme } from '../hooks/useTheme';
+import { useCurrencyStore } from '../store/currencyStore';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { View, ActivityIndicator } from 'react-native';
@@ -35,6 +36,9 @@ function RootLayoutNav() {
     fetchExpenses();
     fetchCategories();
     fetchBudgets();
+
+    // Fetch dynamic exchange rates from API
+    useCurrencyStore.getState().fetchRates();
 
     // 3. Initialize Supabase Auth session
     initializeAuth();

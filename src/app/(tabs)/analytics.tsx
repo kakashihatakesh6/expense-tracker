@@ -10,6 +10,7 @@ import {
 import { useExpenseStore } from '../../store/expenseStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTheme } from '../../hooks/useTheme';
+import { useCurrencyStore } from '../../store/currencyStore';
 import { expenseHelpers } from '../../utils/expenseHelpers';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
@@ -37,16 +38,17 @@ export default function AnalyticsScreen() {
   }, []);
 
   // Calculate stats
+  const convert = useCurrencyStore.getState().convert;
   const totalSpend = expenses.reduce((sum, e) => {
-    const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+    const amt = convert(Number(e.amount), e.currency || 'INR', 'INR');
     return sum + amt;
   }, 0);
   const averageSpend = expenses.length > 0 ? totalSpend / expenses.length : 0;
 
   // Largest Expense
   const largestExpense = [...expenses].sort((a, b) => {
-    const amtA = a.currency === 'USD' ? Number(a.amount) * 83 : Number(a.amount);
-    const amtB = b.currency === 'USD' ? Number(b.amount) * 83 : Number(b.amount);
+    const amtA = convert(Number(a.amount), a.currency || 'INR', 'INR');
+    const amtB = convert(Number(b.amount), b.currency || 'INR', 'INR');
     return amtB - amtA;
   })[0] || null;
 
@@ -58,7 +60,7 @@ export default function AnalyticsScreen() {
         map[e.merchant] = { count: 0, total: 0 };
       }
       map[e.merchant].count += 1;
-      const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+      const amt = convert(Number(e.amount), e.currency || 'INR', 'INR');
       map[e.merchant].total += amt;
     });
 
@@ -78,7 +80,7 @@ export default function AnalyticsScreen() {
   const getHighestSpendingDay = (): { date: string; amount: number } | null => {
     const map: Record<string, number> = {};
     expenses.forEach((e) => {
-      const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+      const amt = convert(Number(e.amount), e.currency || 'INR', 'INR');
       map[e.date] = (map[e.date] || 0) + amt;
     });
 
@@ -281,7 +283,7 @@ export default function AnalyticsScreen() {
               <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Largest Expense</Text>
               <Text style={[styles.cardVal, { color: colors.text }]} numberOfLines={1}>
                 {expenseHelpers.getCurrencySymbol(settings.currency)}
-                {largestExpense ? (largestExpense.currency === 'USD' ? largestExpense.amount * 83 : largestExpense.amount).toFixed(0) : '0'}
+                {largestExpense ? convert(Number(largestExpense.amount), largestExpense.currency || 'INR', 'INR').toFixed(0) : '0'}
               </Text>
               {largestExpense && (
                 <Text style={[styles.gridCardSub, { color: colors.textSecondary }]} numberOfLines={1}>

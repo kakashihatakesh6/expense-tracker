@@ -1,4 +1,5 @@
 import { Expense, Budget, SpendingInsight } from '../types';
+import { useCurrencyStore } from '../store/currencyStore';
 
 export const expenseHelpers = {
   getCurrencySymbol(currency: string = 'INR'): string {
@@ -24,10 +25,11 @@ export const expenseHelpers = {
 
   getTodaySpend(expenses: Expense[]): number {
     const today = this.getLocalDateString();
+    const convert = useCurrencyStore.getState().convert;
     return expenses
       .filter((e) => e.date === today)
       .reduce((sum, e) => {
-        const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+        const amt = convert(Number(e.amount), e.currency || 'INR', 'INR');
         return sum + amt;
       }, 0);
   },
@@ -39,45 +41,49 @@ export const expenseHelpers = {
     const sunday = new Date(today);
     sunday.setDate(today.getDate() - currentDay);
     const startStr = this.getLocalDateString(sunday);
+    const convert = useCurrencyStore.getState().convert;
 
     return expenses
       .filter((e) => e.date >= startStr)
       .reduce((sum, e) => {
-        const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+        const amt = convert(Number(e.amount), e.currency || 'INR', 'INR');
         return sum + amt;
       }, 0);
   },
 
   getMonthlySpend(expenses: Expense[]): number {
     const currentMonth = this.getLocalDateString().slice(0, 7); // YYYY-MM
+    const convert = useCurrencyStore.getState().convert;
     return expenses
       .filter((e) => e.date.startsWith(currentMonth))
       .reduce((sum, e) => {
-        const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+        const amt = convert(Number(e.amount), e.currency || 'INR', 'INR');
         return sum + amt;
       }, 0);
   },
 
   getYearlySpend(expenses: Expense[]): number {
     const currentYear = this.getLocalDateString().slice(0, 4); // YYYY
+    const convert = useCurrencyStore.getState().convert;
     return expenses
       .filter((e) => e.date.startsWith(currentYear))
       .reduce((sum, e) => {
-        const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+        const amt = convert(Number(e.amount), e.currency || 'INR', 'INR');
         return sum + amt;
       }, 0);
   },
 
   getCategorySpending(expenses: Expense[], categoriesList: any[]): { name: string; amount: number; percentage: number; color: string; icon: string }[] {
+    const convert = useCurrencyStore.getState().convert;
     const total = expenses.reduce((sum, e) => {
-      const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+      const amt = convert(Number(e.amount), e.currency || 'INR', 'INR');
       return sum + amt;
     }, 0);
     if (total === 0) return [];
 
     const map: Record<string, number> = {};
     expenses.forEach((e) => {
-      const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+      const amt = convert(Number(e.amount), e.currency || 'INR', 'INR');
       map[e.category] = (map[e.category] || 0) + amt;
     });
 
@@ -100,6 +106,7 @@ export const expenseHelpers = {
   getWeeklySpendingData(expenses: Expense[]): { day: string; amount: number }[] {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const result = days.map((day) => ({ day, amount: 0 }));
+    const convert = useCurrencyStore.getState().convert;
 
     // Get current week start (Sunday)
     const today = new Date();
@@ -112,7 +119,7 @@ export const expenseHelpers = {
       const expenseDate = new Date(e.date + 'T00:00:00');
       if (expenseDate >= sunday) {
         const dayIdx = expenseDate.getDay();
-        const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+        const amt = convert(Number(e.amount), e.currency || 'INR', 'INR');
         result[dayIdx].amount += amt;
       }
     });
@@ -123,6 +130,7 @@ export const expenseHelpers = {
   getMonthlyTrendData(expenses: Expense[]): { month: string; amount: number }[] {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const result = months.map((month) => ({ month, amount: 0 }));
+    const convert = useCurrencyStore.getState().convert;
     
     const currentYear = new Date().getFullYear();
 
@@ -130,7 +138,7 @@ export const expenseHelpers = {
       const expenseDate = new Date(e.date + 'T00:00:00');
       if (expenseDate.getFullYear() === currentYear) {
         const monthIdx = expenseDate.getMonth();
-        const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+        const amt = convert(Number(e.amount), e.currency || 'INR', 'INR');
         result[monthIdx].amount += amt;
       }
     });
@@ -158,13 +166,14 @@ export const expenseHelpers = {
     }
 
     // 1. Largest transaction alert
+    const convert = useCurrencyStore.getState().convert;
     const sorted = [...expenses].sort((a, b) => {
-      const amtA = a.currency === 'USD' ? Number(a.amount) * 83 : Number(a.amount);
-      const amtB = b.currency === 'USD' ? Number(b.amount) * 83 : Number(b.amount);
+      const amtA = convert(Number(a.amount), a.currency || 'INR', 'INR');
+      const amtB = convert(Number(b.amount), b.currency || 'INR', 'INR');
       return amtB - amtA;
     });
     const largest = sorted[0];
-    const largestAmt = largest.currency === 'USD' ? Number(largest.amount) * 83 : Number(largest.amount);
+    const largestAmt = convert(Number(largest.amount), largest.currency || 'INR', 'INR');
     if (largestAmt > 100) {
       const largestSymbol = this.getCurrencySymbol(largest.currency);
       insights.push({

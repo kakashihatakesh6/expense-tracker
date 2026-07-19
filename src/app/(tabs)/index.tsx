@@ -16,6 +16,7 @@ import { useExpenseStore } from '../../store/expenseStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
+import { useCurrencyStore } from '../../store/currencyStore';
 import { expenseHelpers } from '../../utils/expenseHelpers';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
@@ -202,8 +203,9 @@ export default function Dashboard() {
     const strokeWidth = 14;
     const circumference = 2 * Math.PI * radius;
 
+    const convert = useCurrencyStore.getState().convert;
     const totalFilteredSpend = filteredExpenses.reduce((sum, e) => {
-      const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+      const amt = convert(Number(e.amount), e.currency || 'INR', 'INR');
       return sum + amt;
     }, 0);
 
