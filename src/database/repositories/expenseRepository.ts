@@ -242,7 +242,7 @@ export const expenseRepository = {
       } else if (row.key === 'aiCategorizationEnabled') {
         settings.aiCategorizationEnabled = row.value === 'true';
       } else if (row.key === 'geminiApiKey') {
-        settings.geminiApiKey = row.value || defaultKey;
+        settings.geminiApiKey = defaultKey || row.value;
       }
     });
 

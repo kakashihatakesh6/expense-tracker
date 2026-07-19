@@ -65,9 +65,12 @@ export const ocrService = {
    */
   async extractReceipt(imageUri: string, typePreset?: string): Promise<OcrResult> {
     const settings = useSettingsStore.getState().settings;
-    const apiKey = settings.geminiApiKey || 
-                   process.env.EXPO_PUBLIC_GEMINI_API_KEY || 
-                   process.env.GEMINI_API_KEY;
+    const rawApiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || 
+                      process.env.GEMINI_API_KEY ||
+                      settings.geminiApiKey;
+    const apiKey = rawApiKey ? rawApiKey.trim() : '';
+
+    console.log('DEBUG: Using Gemini API Key (masked):', apiKey ? apiKey.substring(0, 10) + '...' + apiKey.substring(apiKey.length - 5) : 'undefined');
 
     const isMockUri = imageUri.startsWith('mock_');
     const useCloud = settings.ocrEngine === 'cloud' || !isMockUri;
