@@ -204,7 +204,7 @@ Follow these strict guidelines:
           date: parsedResult.date || new Date().toISOString().split('T')[0],
           time: parsedResult.time || new Date().toTimeString().slice(0, 5),
           tax: typeof parsedResult.tax === 'number' ? parsedResult.tax : 0,
-          currency: parsedResult.currency || 'USD',
+          currency: parsedResult.currency || 'INR',
           paymentMethod: parsedResult.paymentMethod || (isScreenshotPreset ? 'UPI' : 'Cash'),
           items: Array.isArray(parsedResult.items) ? parsedResult.items : [],
           confidence: typeof parsedResult.confidence === 'number' ? parsedResult.confidence : 0.9,
@@ -251,7 +251,7 @@ Follow these strict guidelines:
           date: today,
           time: timeNow,
           tax: 0.65,
-          currency: 'USD',
+          currency: 'INR',
           paymentMethod: 'Credit Card',
           confidence: 0.95,
           items: [
@@ -267,7 +267,7 @@ Follow these strict guidelines:
           date: today,
           time: timeNow,
           tax: 4.12,
-          currency: 'USD',
+          currency: 'INR',
           paymentMethod: 'Google Pay',
           confidence: 0.92,
           items: [
@@ -283,7 +283,7 @@ Follow these strict guidelines:
           date: today,
           time: '14:32',
           tax: 9.45,
-          currency: 'USD',
+          currency: 'INR',
           paymentMethod: 'Debit Card',
           confidence: 0.89,
           items: [
@@ -300,7 +300,7 @@ Follow these strict guidelines:
           date: today,
           time: '08:15',
           tax: 3.50,
-          currency: 'USD',
+          currency: 'INR',
           paymentMethod: 'Cash',
           confidence: 0.98,
           items: [
@@ -368,7 +368,7 @@ Follow these strict guidelines:
           date: today,
           time: timeNow,
           tax: 1.80,
-          currency: 'USD',
+          currency: 'INR',
           paymentMethod: 'Credit Card',
           confidence: 0.75,
           items: [

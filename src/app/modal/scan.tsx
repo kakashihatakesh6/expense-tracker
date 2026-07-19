@@ -18,6 +18,8 @@ import { ocrService, OcrResult } from '../../services/ocrService';
 import { aiService } from '../../services/aiService';
 import { useExpenseStore } from '../../store/expenseStore';
 import { useTheme } from '../../hooks/useTheme';
+import { useSettingsStore } from '../../store/settingsStore';
+import { expenseHelpers } from '../../utils/expenseHelpers';
 import { Card } from '../../components/Card';
 import { Camera as CameraIcon, Check, RefreshCw, Sparkles, X, Image as ImageIcon, ZapOff, Zap, RotateCw } from 'lucide-react-native';
 
@@ -26,6 +28,7 @@ export default function OCRScanModal() {
   const { colors } = useTheme();
   
   const { addExpense } = useExpenseStore();
+  const { settings } = useSettingsStore();
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -202,7 +205,7 @@ export default function OCRScanModal() {
       date,
       time: ocrResult?.time || new Date().toTimeString().slice(0, 5),
       paymentMethod: ocrResult?.paymentMethod || 'Credit Card',
-      currency: ocrResult?.currency || 'USD',
+      currency: ocrResult?.currency || 'INR',
       tax: tax ? parseFloat(tax) : 0,
       notes: 'Logged via Receipt Scanner OCR',
       receiptImage: photoUri || undefined,
@@ -554,7 +557,8 @@ export default function OCRScanModal() {
                       {item.quantity}x {item.name}
                     </Text>
                     <Text style={[styles.itemPrice, { color: colors.text }]}>
-                      ${(item.price * item.quantity).toFixed(2)}
+                      {expenseHelpers.getCurrencySymbol(ocrResult?.currency || settings.currency)}
+                      {(item.price * item.quantity).toFixed(2)}
                     </Text>
                   </View>
                 ))}

@@ -100,7 +100,7 @@ export function initDatabase(): void {
     if (settingsCount && settingsCount.count === 0) {
       const defaultSettings = [
         { key: 'theme', value: 'system' },
-        { key: 'currency', value: 'USD' },
+        { key: 'currency', value: 'INR' },
         { key: 'notificationsEnabled', value: 'true' },
         { key: 'ocrEngine', value: 'mock' },
         { key: 'aiCategorizationEnabled', value: 'true' },
@@ -144,7 +144,7 @@ function initWebDatabase() {
   if (!localStorage.getItem('web_settings')) {
     const defaultSettings = {
       theme: 'system',
-      currency: 'USD',
+      currency: 'INR',
       notificationsEnabled: 'true',
       ocrEngine: 'mock',
       aiCategorizationEnabled: 'true',

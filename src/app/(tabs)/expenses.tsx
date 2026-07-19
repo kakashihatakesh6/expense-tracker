@@ -79,9 +79,11 @@ export default function ExpensesList() {
     });
 
   const handleDelete = (id: string, merchant: string) => {
+    const targetExpense = expenses.find(e => e.id === id);
+    const currencySymbol = expenseHelpers.getCurrencySymbol(targetExpense?.currency || settings.currency);
     Alert.alert(
       'Delete Transaction',
-      `Are you sure you want to delete the expense of ${expenseHelpers.getCurrencySymbol(settings.currency)}${expenses.find(e => e.id === id)?.amount.toFixed(2)} at ${merchant}?`,
+      `Are you sure you want to delete the expense of ${currencySymbol}${targetExpense?.amount.toFixed(2)} at ${merchant}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -270,7 +272,7 @@ export default function ExpensesList() {
                       </View>
                       <View style={styles.amountCol}>
                         <Text style={[styles.txAmount, { color: colors.text }]}>
-                          {expenseHelpers.getCurrencySymbol(settings.currency)}
+                          {expenseHelpers.getCurrencySymbol(item.currency || settings.currency)}
                           {item.amount.toFixed(2)}
                         </Text>
                         <View style={styles.dateBadge}>

@@ -37,11 +37,18 @@ export default function AnalyticsScreen() {
   }, []);
 
   // Calculate stats
-  const totalSpend = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalSpend = expenses.reduce((sum, e) => {
+    const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+    return sum + amt;
+  }, 0);
   const averageSpend = expenses.length > 0 ? totalSpend / expenses.length : 0;
 
   // Largest Expense
-  const largestExpense = [...expenses].sort((a, b) => b.amount - a.amount)[0] || null;
+  const largestExpense = [...expenses].sort((a, b) => {
+    const amtA = a.currency === 'USD' ? Number(a.amount) * 83 : Number(a.amount);
+    const amtB = b.currency === 'USD' ? Number(b.amount) * 83 : Number(b.amount);
+    return amtB - amtA;
+  })[0] || null;
 
   // Top Merchants
   const getTopMerchants = (): { merchant: string; count: number; total: number }[] => {
@@ -51,7 +58,8 @@ export default function AnalyticsScreen() {
         map[e.merchant] = { count: 0, total: 0 };
       }
       map[e.merchant].count += 1;
-      map[e.merchant].total += e.amount;
+      const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+      map[e.merchant].total += amt;
     });
 
     return Object.keys(map)
@@ -70,7 +78,8 @@ export default function AnalyticsScreen() {
   const getHighestSpendingDay = (): { date: string; amount: number } | null => {
     const map: Record<string, number> = {};
     expenses.forEach((e) => {
-      map[e.date] = (map[e.date] || 0) + e.amount;
+      const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+      map[e.date] = (map[e.date] || 0) + amt;
     });
 
     const sorted = Object.keys(map)
@@ -272,7 +281,7 @@ export default function AnalyticsScreen() {
               <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Largest Expense</Text>
               <Text style={[styles.cardVal, { color: colors.text }]} numberOfLines={1}>
                 {expenseHelpers.getCurrencySymbol(settings.currency)}
-                {largestExpense ? largestExpense.amount.toFixed(0) : '0'}
+                {largestExpense ? (largestExpense.currency === 'USD' ? largestExpense.amount * 83 : largestExpense.amount).toFixed(0) : '0'}
               </Text>
               {largestExpense && (
                 <Text style={[styles.gridCardSub, { color: colors.textSecondary }]} numberOfLines={1}>

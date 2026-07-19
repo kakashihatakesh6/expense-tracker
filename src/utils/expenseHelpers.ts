@@ -26,7 +26,10 @@ export const expenseHelpers = {
     const today = this.getLocalDateString();
     return expenses
       .filter((e) => e.date === today)
-      .reduce((sum, e) => sum + Number(e.amount), 0);
+      .reduce((sum, e) => {
+        const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+        return sum + amt;
+      }, 0);
   },
 
   getWeeklySpend(expenses: Expense[]): number {
@@ -39,30 +42,43 @@ export const expenseHelpers = {
 
     return expenses
       .filter((e) => e.date >= startStr)
-      .reduce((sum, e) => sum + Number(e.amount), 0);
+      .reduce((sum, e) => {
+        const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+        return sum + amt;
+      }, 0);
   },
 
   getMonthlySpend(expenses: Expense[]): number {
     const currentMonth = this.getLocalDateString().slice(0, 7); // YYYY-MM
     return expenses
       .filter((e) => e.date.startsWith(currentMonth))
-      .reduce((sum, e) => sum + Number(e.amount), 0);
+      .reduce((sum, e) => {
+        const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+        return sum + amt;
+      }, 0);
   },
 
   getYearlySpend(expenses: Expense[]): number {
     const currentYear = this.getLocalDateString().slice(0, 4); // YYYY
     return expenses
       .filter((e) => e.date.startsWith(currentYear))
-      .reduce((sum, e) => sum + Number(e.amount), 0);
+      .reduce((sum, e) => {
+        const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+        return sum + amt;
+      }, 0);
   },
 
   getCategorySpending(expenses: Expense[], categoriesList: any[]): { name: string; amount: number; percentage: number; color: string; icon: string }[] {
-    const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    const total = expenses.reduce((sum, e) => {
+      const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+      return sum + amt;
+    }, 0);
     if (total === 0) return [];
 
     const map: Record<string, number> = {};
     expenses.forEach((e) => {
-      map[e.category] = (map[e.category] || 0) + Number(e.amount);
+      const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+      map[e.category] = (map[e.category] || 0) + amt;
     });
 
     return Object.keys(map).map((catName) => {
@@ -96,7 +112,8 @@ export const expenseHelpers = {
       const expenseDate = new Date(e.date + 'T00:00:00');
       if (expenseDate >= sunday) {
         const dayIdx = expenseDate.getDay();
-        result[dayIdx].amount += Number(e.amount);
+        const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+        result[dayIdx].amount += amt;
       }
     });
 
@@ -113,7 +130,8 @@ export const expenseHelpers = {
       const expenseDate = new Date(e.date + 'T00:00:00');
       if (expenseDate.getFullYear() === currentYear) {
         const monthIdx = expenseDate.getMonth();
-        result[monthIdx].amount += Number(e.amount);
+        const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+        result[monthIdx].amount += amt;
       }
     });
 
@@ -140,13 +158,19 @@ export const expenseHelpers = {
     }
 
     // 1. Largest transaction alert
-    const sorted = [...expenses].sort((a, b) => Number(b.amount) - Number(a.amount));
+    const sorted = [...expenses].sort((a, b) => {
+      const amtA = a.currency === 'USD' ? Number(a.amount) * 83 : Number(a.amount);
+      const amtB = b.currency === 'USD' ? Number(b.amount) * 83 : Number(b.amount);
+      return amtB - amtA;
+    });
     const largest = sorted[0];
-    if (Number(largest.amount) > 100) {
+    const largestAmt = largest.currency === 'USD' ? Number(largest.amount) * 83 : Number(largest.amount);
+    if (largestAmt > 100) {
+      const largestSymbol = this.getCurrencySymbol(largest.currency);
       insights.push({
         id: 'largest_spend',
         title: 'High Single Spend detected',
-        description: `Your largest single expense was ${symbol}${Number(largest.amount).toFixed(2)} at ${largest.merchant} under ${largest.category}.`,
+        description: `Your largest single expense was ${largestSymbol}${Number(largest.amount).toFixed(2)} at ${largest.merchant} under ${largest.category}.`,
         type: 'warning',
         date: today,
       });

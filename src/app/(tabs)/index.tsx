@@ -102,6 +102,28 @@ export default function Dashboard() {
       ? monthlySpend
       : yearlySpend;
 
+  const getFilteredExpensesForActiveTab = () => {
+    const todayStr = expenseHelpers.getLocalDateString();
+    if (activeTab === 'today') {
+      return expenses.filter((e) => e.date === todayStr);
+    }
+    if (activeTab === 'week') {
+      const today = new Date();
+      const currentDay = today.getDay();
+      const sunday = new Date(today);
+      sunday.setDate(today.getDate() - currentDay);
+      const startStr = expenseHelpers.getLocalDateString(sunday);
+      return expenses.filter((e) => e.date >= startStr);
+    }
+    if (activeTab === 'month') {
+      const currentMonth = todayStr.slice(0, 7); // YYYY-MM
+      return expenses.filter((e) => e.date.startsWith(currentMonth));
+    }
+    // year
+    const currentYear = todayStr.slice(0, 4); // YYYY
+    return expenses.filter((e) => e.date.startsWith(currentYear));
+  };
+
   const currentMonthBudget =
     budgets.find((b) => b.category === 'All' && b.period === 'monthly')?.amount || 0;
 
@@ -171,7 +193,8 @@ export default function Dashboard() {
 
   // Render Category Pie Chart via custom SVG for robust, light styling
   const renderMiniCategoryChart = () => {
-    const data = expenseHelpers.getCategorySpending(expenses, categories);
+    const filteredExpenses = getFilteredExpensesForActiveTab();
+    const data = expenseHelpers.getCategorySpending(filteredExpenses, categories);
     if (data.length === 0) return null;
 
     let accumulatedAngle = 0;
@@ -179,12 +202,17 @@ export default function Dashboard() {
     const strokeWidth = 14;
     const circumference = 2 * Math.PI * radius;
 
+    const totalFilteredSpend = filteredExpenses.reduce((sum, e) => {
+      const amt = e.currency === 'USD' ? Number(e.amount) * 83 : Number(e.amount);
+      return sum + amt;
+    }, 0);
+
     return (
       <View style={styles.chartContainer}>
         <Svg height="110" width="110" viewBox="0 0 110 110">
           <Circle cx="55" cy="55" r={radius} stroke={colors.border} strokeWidth={strokeWidth} fill="transparent" />
           {data.map((cat, idx) => {
-            const percentage = cat.amount / expenses.reduce((sum, e) => sum + e.amount, 0);
+            const percentage = totalFilteredSpend > 0 ? (cat.amount / totalFilteredSpend) : 0;
             const strokeDashoffset = circumference - percentage * circumference;
             const rotation = (accumulatedAngle * 360) / circumference - 90;
             accumulatedAngle += percentage * circumference;
@@ -273,7 +301,7 @@ export default function Dashboard() {
             {expenseHelpers.getCurrencySymbol(settings.currency)}
             {activeSpend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
-          {expenses.length > 0 && renderMiniCategoryChart()}
+          {getFilteredExpensesForActiveTab().length > 0 && renderMiniCategoryChart()}
         </Card>
       </View>
 
@@ -429,7 +457,7 @@ export default function Dashboard() {
                     </Text>
                   </View>
                   <Text style={[styles.txAmount, { color: colors.text }]}>
-                    {expenseHelpers.getCurrencySymbol(settings.currency)}
+                    {expenseHelpers.getCurrencySymbol(expense.currency || settings.currency)}
                     {expense.amount.toFixed(2)}
                   </Text>
                 </View>
