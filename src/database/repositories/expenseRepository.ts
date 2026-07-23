@@ -213,6 +213,10 @@ export const expenseRepository = {
         ocrEngine: (settingsMap.ocrEngine as 'mock' | 'cloud') || 'mock',
         aiCategorizationEnabled: settingsMap.aiCategorizationEnabled === 'true' || settingsMap.aiCategorizationEnabled === true,
         geminiApiKey: settingsMap.geminiApiKey || defaultKey,
+        notificationHour: settingsMap.notificationHour !== undefined ? Number(settingsMap.notificationHour) : 20,
+        notificationMinute: settingsMap.notificationMinute !== undefined ? Number(settingsMap.notificationMinute) : 0,
+        budgetWarningEnabled: settingsMap.budgetWarningEnabled === undefined ? true : (settingsMap.budgetWarningEnabled === 'true' || settingsMap.budgetWarningEnabled === true),
+        budgetWarningThreshold: settingsMap.budgetWarningThreshold !== undefined ? Number(settingsMap.budgetWarningThreshold) : 80,
       };
     }
 
@@ -224,6 +228,10 @@ export const expenseRepository = {
       ocrEngine: 'mock',
       aiCategorizationEnabled: true,
       geminiApiKey: defaultKey,
+      notificationHour: 20,
+      notificationMinute: 0,
+      budgetWarningEnabled: true,
+      budgetWarningThreshold: 80,
     };
 
     if (!db) return settings;
@@ -243,6 +251,14 @@ export const expenseRepository = {
         settings.aiCategorizationEnabled = row.value === 'true';
       } else if (row.key === 'geminiApiKey') {
         settings.geminiApiKey = defaultKey || row.value;
+      } else if (row.key === 'notificationHour') {
+        settings.notificationHour = Number(row.value);
+      } else if (row.key === 'notificationMinute') {
+        settings.notificationMinute = Number(row.value);
+      } else if (row.key === 'budgetWarningEnabled') {
+        settings.budgetWarningEnabled = row.value === 'true';
+      } else if (row.key === 'budgetWarningThreshold') {
+        settings.budgetWarningThreshold = Number(row.value);
       }
     });
 

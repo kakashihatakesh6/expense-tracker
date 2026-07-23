@@ -20,6 +20,7 @@ import { useCurrencyStore } from '../../store/currencyStore';
 import { expenseHelpers } from '../../utils/expenseHelpers';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
+import { Header } from '../../components/Header';
 import Svg, { Circle, Rect } from 'react-native-svg';
 import {
   Plus,
@@ -66,28 +67,10 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const avatarUrl = user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
     navigation.setOptions({
-      headerTitleAlign: 'left',
-      headerTitle: () => (
-        <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitleText, { color: colors.text }]}>Dashboard</Text>
-          <Text style={[styles.headerSubtitleText, { color: colors.textSecondary }]}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-          </Text>
-        </View>
-      ),
-      headerRight: () => (
-        <TouchableOpacity
-          style={[styles.headerProfileBtn, styles.headerAvatarContainer, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}
-          onPress={() => setProfileModalVisible(true)}
-          activeOpacity={0.8}
-        >
-          <User size={16} color={colors.primary} />
-        </TouchableOpacity>
-      ),
+      headerShown: false,
     });
-  }, [navigation, user, colors]);
+  }, [navigation]);
 
   const todaySpend = expenseHelpers.getTodaySpend(expenses);
   const weeklySpend = expenseHelpers.getWeeklySpend(expenses);
@@ -270,7 +253,19 @@ export default function Dashboard() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <Header
+        title="SPENDLY"
+        onMenuPress={() => setProfileModalVisible(true)}
+        onNotificationPress={() => {
+          Alert.alert(
+            'Notifications',
+            'No new spending alerts. All budget parameters are running within optimal limits.'
+          );
+        }}
+        notificationCount={0}
+      />
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* 1. Spending Summary Card */}
       <View style={styles.summaryHeader}>
         <View style={styles.tabContainer}>
@@ -606,6 +601,7 @@ export default function Dashboard() {
         </View>
       </Modal>
     </ScrollView>
+    </View>
   );
 }
 

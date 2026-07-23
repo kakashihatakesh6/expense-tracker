@@ -11,6 +11,9 @@ interface SettingsState {
   setOcrEngine: (engine: 'mock' | 'cloud') => void;
   setAiCategorizationEnabled: (enabled: boolean) => void;
   setGeminiApiKey: (key: string) => void;
+  setNotificationTime: (hour: number, minute: number) => void;
+  setBudgetWarningEnabled: (enabled: boolean) => void;
+  setBudgetWarningThreshold: (threshold: number) => void;
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -22,6 +25,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     aiCategorizationEnabled: true,
     geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY || 
                   process.env.GEMINI_API_KEY,
+    notificationHour: 20,
+    notificationMinute: 0,
+    budgetWarningEnabled: true,
+    budgetWarningThreshold: 80,
   },
   fetchSettings: () => {
     try {
@@ -77,6 +84,41 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       set((state) => ({ settings: { ...state.settings, geminiApiKey: key } }));
     } catch (error) {
       console.error('Error saving geminiApiKey setting:', error);
+    }
+  },
+  setNotificationTime: (hour, minute) => {
+    try {
+      expenseRepository.saveSetting('notificationHour', String(hour));
+      expenseRepository.saveSetting('notificationMinute', String(minute));
+      set((state) => ({
+        settings: {
+          ...state.settings,
+          notificationHour: hour,
+          notificationMinute: minute,
+        },
+      }));
+    } catch (error) {
+      console.error('Error saving notificationTime setting:', error);
+    }
+  },
+  setBudgetWarningEnabled: (enabled) => {
+    try {
+      expenseRepository.saveSetting('budgetWarningEnabled', String(enabled));
+      set((state) => ({
+        settings: { ...state.settings, budgetWarningEnabled: enabled },
+      }));
+    } catch (error) {
+      console.error('Error saving budgetWarningEnabled setting:', error);
+    }
+  },
+  setBudgetWarningThreshold: (threshold) => {
+    try {
+      expenseRepository.saveSetting('budgetWarningThreshold', String(threshold));
+      set((state) => ({
+        settings: { ...state.settings, budgetWarningThreshold: threshold },
+      }));
+    } catch (error) {
+      console.error('Error saving budgetWarningThreshold setting:', error);
     }
   },
 }));

@@ -36,6 +36,10 @@ export interface Settings {
   ocrEngine: 'mock' | 'cloud';
   aiCategorizationEnabled: boolean;
   geminiApiKey?: string;
+  notificationHour: number;
+  notificationMinute: number;
+  budgetWarningEnabled: boolean;
+  budgetWarningThreshold: number;
 }
 
 export interface SpendingInsight {

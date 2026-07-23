@@ -16,6 +16,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/Card';
 import { exportService } from '../../services/exportService';
 import { notificationService } from '../../services/notificationService';
+import { expenseHelpers } from '../../utils/expenseHelpers';
 import {
   Moon,
   Sun,
@@ -27,15 +28,26 @@ import {
   Info,
   IndianRupee,
   LogOut,
+  AlertTriangle,
 } from 'lucide-react-native';
 
 export default function SettingsScreen() {
-  const { colors, theme } = useTheme();
+  const { colors, theme, isDark } = useTheme();
   const user = useAuthStore((state) => state.user);
   const signOut = useAuthStore((state) => state.signOut);
   
-  const { settings, setTheme, setCurrency, setNotificationsEnabled, setAiCategorizationEnabled, setOcrEngine, setGeminiApiKey } =
-    useSettingsStore();
+  const { 
+    settings, 
+    setTheme, 
+    setCurrency, 
+    setNotificationsEnabled, 
+    setAiCategorizationEnabled, 
+    setOcrEngine, 
+    setGeminiApiKey,
+    setNotificationTime,
+    setBudgetWarningEnabled,
+    setBudgetWarningThreshold,
+  } = useSettingsStore();
   const { expenses } = useExpenseStore();
 
   const handleLogout = () => {
@@ -100,18 +112,81 @@ export default function SettingsScreen() {
     }
   };
 
+  const formatTime = (hour: number, minute: number) => {
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    const displayMinute = minute < 10 ? `0${minute}` : minute;
+    return `${displayHour}:${displayMinute} ${ampm}`;
+  };
+
+  const handleAdjustHour = (amount: number) => {
+    const currentHour = settings.notificationHour !== undefined ? settings.notificationHour : 20;
+    const currentMinute = settings.notificationMinute !== undefined ? settings.notificationMinute : 0;
+    const nextHour = (currentHour + amount + 24) % 24;
+    setNotificationTime(nextHour, currentMinute);
+    if (settings.notificationsEnabled) {
+      notificationService.scheduleDailyReminder(nextHour, currentMinute);
+    }
+  };
+
+  const handleAdjustMinute = (amount: number) => {
+    const currentHour = settings.notificationHour !== undefined ? settings.notificationHour : 20;
+    const currentMinute = settings.notificationMinute !== undefined ? settings.notificationMinute : 0;
+    const nextMinute = (currentMinute + amount + 60) % 60;
+    setNotificationTime(currentHour, nextMinute);
+    if (settings.notificationsEnabled) {
+      notificationService.scheduleDailyReminder(currentHour, nextMinute);
+    }
+  };
+
   const handleToggleNotifications = async (enabled: boolean) => {
     setNotificationsEnabled(enabled);
     if (enabled) {
       const granted = await notificationService.requestPermissions();
       if (granted) {
-        await notificationService.scheduleDailyReminder(20, 0); // 8 PM
+        await notificationService.scheduleDailyReminder(
+          settings.notificationHour !== undefined ? settings.notificationHour : 20,
+          settings.notificationMinute !== undefined ? settings.notificationMinute : 0
+        );
       } else {
         setNotificationsEnabled(false);
         Alert.alert('Permission Denied', 'Please enable notifications in device settings.');
       }
     } else {
       await notificationService.cancelAllScheduledNotifications();
+    }
+  };
+
+  const handleTestDailyReminder = async () => {
+    try {
+      await notificationService.sendTestDailyReminder();
+    } catch {
+      Alert.alert('Error', 'Failed to send test reminder notification.');
+    }
+  };
+
+  const handleTestWarning = async () => {
+    try {
+      await notificationService.sendTestBudgetWarning(
+        'Groceries',
+        settings.budgetWarningThreshold || 80,
+        expenseHelpers.getCurrencySymbol(settings.currency)
+      );
+    } catch {
+      Alert.alert('Error', 'Failed to send test warning notification.');
+    }
+  };
+
+  const handleTestExceeded = async () => {
+    try {
+      await notificationService.sendTestBudgetExceeded(
+        'Dining Out',
+        145.50,
+        100.00,
+        expenseHelpers.getCurrencySymbol(settings.currency)
+      );
+    } catch {
+      Alert.alert('Error', 'Failed to send test exceeded notification.');
     }
   };
 
@@ -204,7 +279,7 @@ export default function SettingsScreen() {
             <View style={styles.rowInfo}>
               <Text style={[styles.rowLabel, { color: colors.text }]}>Daily Reminders</Text>
               <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                Remind me at 8:00 PM to log spending
+                Remind me to log spending daily at {formatTime(settings.notificationHour || 20, settings.notificationMinute || 0)}
               </Text>
             </View>
             <Switch
@@ -214,6 +289,183 @@ export default function SettingsScreen() {
               trackColor={{ false: '#767577', true: colors.primaryLight }}
             />
           </View>
+
+          {settings.notificationsEnabled && (
+            <>
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              
+              {/* Centered Clock Style Time Picker */}
+              <View style={styles.timeSection}>
+                <Text style={[styles.nestedTitle, { color: colors.text }]}>Reminder Alert Schedule</Text>
+                <Text style={[styles.apiKeyHelp, { color: colors.textSecondary, marginBottom: 12 }]}>
+                  Configure the target hour and minutes to receive your daily check-in.
+                </Text>
+                
+                <View style={[styles.clockCard, { backgroundColor: isDark ? '#1a2235' : '#F8FAFC', borderColor: colors.border }]}>
+                  <View style={styles.clockDigitContainer}>
+                    <TouchableOpacity 
+                      onPress={() => handleAdjustHour(-1)} 
+                      style={[styles.clockAdjustBtn, { backgroundColor: colors.primaryLight }]}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.clockAdjustText, { color: colors.primary }]}>-</Text>
+                    </TouchableOpacity>
+                    
+                    <View style={styles.digitBox}>
+                      <Text style={[styles.clockDigit, { color: colors.text }]}>
+                        {String(settings.notificationHour !== undefined ? (settings.notificationHour % 12 === 0 ? 12 : settings.notificationHour % 12) : 8).padStart(2, '0')}
+                      </Text>
+                      <Text style={[styles.digitLabel, { color: colors.textSecondary }]}>HOUR</Text>
+                    </View>
+                    
+                    <TouchableOpacity 
+                      onPress={() => handleAdjustHour(1)} 
+                      style={[styles.clockAdjustBtn, { backgroundColor: colors.primaryLight }]}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.clockAdjustText, { color: colors.primary }]}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={[styles.clockColon, { color: colors.textSecondary }]}>:</Text>
+
+                  <View style={styles.clockDigitContainer}>
+                    <TouchableOpacity 
+                      onPress={() => handleAdjustMinute(-5)} 
+                      style={[styles.clockAdjustBtn, { backgroundColor: colors.primaryLight }]}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.clockAdjustText, { color: colors.primary }]}>-</Text>
+                    </TouchableOpacity>
+                    
+                    <View style={styles.digitBox}>
+                      <Text style={[styles.clockDigit, { color: colors.text }]}>
+                        {String(settings.notificationMinute !== undefined ? settings.notificationMinute : 0).padStart(2, '0')}
+                      </Text>
+                      <Text style={[styles.digitLabel, { color: colors.textSecondary }]}>MIN</Text>
+                    </View>
+                    
+                    <TouchableOpacity 
+                      onPress={() => handleAdjustMinute(5)} 
+                      style={[styles.clockAdjustBtn, { backgroundColor: colors.primaryLight }]}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.clockAdjustText, { color: colors.primary }]}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity 
+                    onPress={() => handleAdjustHour(12)} 
+                    style={[styles.ampmBtn, { backgroundColor: colors.primaryLight }]}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.ampmText, { color: colors.primary }]}>
+                      {settings.notificationHour >= 12 ? 'PM' : 'AM'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              
+              {/* Budget Warning Configuration with Symmetric Segmented Selector */}
+              <View style={styles.nestedRowBlock}>
+                <View style={styles.row}>
+                  <View style={styles.rowInfo}>
+                    <Text style={[styles.nestedTitle, { color: colors.text }]}>Budget Limit Warning</Text>
+                    <Text style={[styles.apiKeyHelp, { color: colors.textSecondary }]}>
+                      Get alerted when approaching your spending limits.
+                    </Text>
+                  </View>
+                  <Switch
+                    value={settings.budgetWarningEnabled}
+                    onValueChange={setBudgetWarningEnabled}
+                    thumbColor={settings.budgetWarningEnabled ? colors.primary : '#f4f3f4'}
+                    trackColor={{ false: '#767577', true: colors.primaryLight }}
+                  />
+                </View>
+                
+                {settings.budgetWarningEnabled && (
+                  <View style={[styles.segmentedContainer, { backgroundColor: isDark ? '#151d30' : '#F1F5F9' }]}>
+                    {[50, 80, 90].map((val) => {
+                      const isSelected = settings.budgetWarningThreshold === val;
+                      return (
+                        <TouchableOpacity
+                          key={val}
+                          onPress={() => setBudgetWarningThreshold(val)}
+                          style={[
+                            styles.segmentedItem,
+                            isSelected && { backgroundColor: colors.primary }
+                          ]}
+                          activeOpacity={0.8}
+                        >
+                          <Text 
+                            style={[
+                              styles.segmentedText, 
+                              { 
+                                color: isSelected ? '#FFFFFF' : colors.textSecondary,
+                                fontWeight: isSelected ? '800' : '600'
+                              }
+                            ]}
+                          >
+                            {val}% limit
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+              {/* Push Testing Control Room - Beautiful list items */}
+              <View style={styles.nestedRowBlock}>
+                <Text style={[styles.nestedTitle, { color: colors.text, marginBottom: 4 }]}>Notification Testing Center</Text>
+                <Text style={[styles.apiKeyHelp, { color: colors.textSecondary, marginBottom: 12 }]}>
+                  Test how spending alerts will render natively on your device.
+                </Text>
+                
+                <View style={styles.testList}>
+                  <TouchableOpacity 
+                    onPress={handleTestDailyReminder} 
+                    style={[styles.testListItem, { borderColor: colors.border, backgroundColor: colors.card }]}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.testIconBg, { backgroundColor: colors.primaryLight }]}>
+                      <Bell size={16} color={colors.primary} />
+                    </View>
+                    <Text style={[styles.testListText, { color: colors.text }]}>Send Mock Daily Reminder</Text>
+                    <Text style={[styles.testListBadge, { color: colors.primary, backgroundColor: colors.primaryLight }]}>Test</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    onPress={handleTestWarning} 
+                    style={[styles.testListItem, { borderColor: colors.border, backgroundColor: colors.card }]}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.testIconBg, { backgroundColor: colors.warning + '20' }]}>
+                      <AlertTriangle size={16} color={colors.warning} />
+                    </View>
+                    <Text style={[styles.testListText, { color: colors.text }]}>Send Budget Warning ({settings.budgetWarningThreshold || 80}%)</Text>
+                    <Text style={[styles.testListBadge, { color: colors.warning, backgroundColor: colors.warning + '20' }]}>Test</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    onPress={handleTestExceeded} 
+                    style={[styles.testListItem, { borderColor: colors.border, backgroundColor: colors.card }]}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.testIconBg, { backgroundColor: colors.danger + '20' }]}>
+                      <AlertTriangle size={16} color={colors.danger} />
+                    </View>
+                    <Text style={[styles.testListText, { color: colors.text }]}>Send Budget Exceeded Alert</Text>
+                    <Text style={[styles.testListBadge, { color: colors.danger, backgroundColor: colors.danger + '20' }]}>Test</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </>
+          )}
         </Card>
 
         {/* Section: Data Operations */}
@@ -405,5 +657,126 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 6,
     lineHeight: 14,
+  },
+  nestedRowBlock: {
+    paddingVertical: 14,
+  },
+  nestedTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  timeSection: {
+    paddingVertical: 14,
+  },
+  clockCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    marginTop: 8,
+  },
+  clockDigitContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  clockAdjustBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clockAdjustText: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  digitBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 44,
+  },
+  clockDigit: {
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  digitLabel: {
+    fontSize: 8,
+    fontWeight: '800',
+    marginTop: 2,
+    letterSpacing: 0.5,
+  },
+  clockColon: {
+    fontSize: 26,
+    fontWeight: '800',
+    marginHorizontal: 12,
+    bottom: 2,
+  },
+  ampmBtn: {
+    marginLeft: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 46,
+  },
+  ampmText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  segmentedContainer: {
+    flexDirection: 'row',
+    borderRadius: 10,
+    padding: 4,
+    marginTop: 10,
+  },
+  segmentedItem: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentedText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  testList: {
+    marginTop: 8,
+    gap: 8,
+  },
+  testListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  testIconBg: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  testListText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  testListBadge: {
+    fontSize: 9,
+    fontWeight: '800',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+    overflow: 'hidden',
   },
 });

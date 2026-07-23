@@ -127,39 +127,62 @@ export default function AddExpenseModal() {
 
     router.back();
   };
-
   const _checkBudgetLimits = (itemCategory: string, itemAmount: number) => {
+    const threshold = settings.budgetWarningThreshold || 80;
+    const thresholdFrac = threshold / 100;
+
     // 1. Overall monthly budget check
     const overallBudget = budgets.find((b) => b.category === 'All' && b.period === 'monthly');
     if (overallBudget) {
       const monthlySpend = expenses
         .filter((e) => e.date.startsWith(expenseHelpers.getLocalDateString().slice(0, 7)))
         .reduce((sum, e) => sum + Number(e.amount), 0) + itemAmount;
-  
+      const oldMonthlySpend = monthlySpend - itemAmount;
+      const warningLimit = overallBudget.amount * thresholdFrac;
+
       if (monthlySpend > overallBudget.amount) {
         notificationService.sendImmediateNotification(
           '🚨 Monthly Budget Exceeded!',
           `Your total spending (${expenseHelpers.getCurrencySymbol(settings.currency)}${monthlySpend.toFixed(2)}) has gone over your monthly budget limit of ${expenseHelpers.getCurrencySymbol(settings.currency)}${overallBudget.amount.toFixed(2)}.`
         );
+      } else if (
+        settings.budgetWarningEnabled &&
+        oldMonthlySpend < warningLimit &&
+        monthlySpend >= warningLimit
+      ) {
+        notificationService.sendImmediateNotification(
+          '⚠️ Approaching Monthly Budget!',
+          `You have spent ${threshold}% (${expenseHelpers.getCurrencySymbol(settings.currency)}${monthlySpend.toFixed(2)}) of your overall monthly budget limit of ${expenseHelpers.getCurrencySymbol(settings.currency)}${overallBudget.amount.toFixed(2)}.`
+        );
       }
     }
-  
+
     // 2. Specific category budget check
     const catBudget = budgets.find((b) => b.category === itemCategory && b.period === 'monthly');
     if (catBudget) {
       const catSpend = expenses
         .filter((e) => e.category === itemCategory && e.date.startsWith(expenseHelpers.getLocalDateString().slice(0, 7)))
         .reduce((sum, e) => sum + Number(e.amount), 0) + itemAmount;
+      const oldCatSpend = catSpend - itemAmount;
+      const catWarningLimit = catBudget.amount * thresholdFrac;
 
       if (catSpend > catBudget.amount) {
         notificationService.sendImmediateNotification(
           `🚨 Category Limit Exceeded: ${itemCategory}`,
           `Your ${itemCategory} spending (${expenseHelpers.getCurrencySymbol(settings.currency)}${catSpend.toFixed(2)}) has gone over your set category monthly limit (${expenseHelpers.getCurrencySymbol(settings.currency)}${catBudget.amount.toFixed(2)}).`
         );
+      } else if (
+        settings.budgetWarningEnabled &&
+        oldCatSpend < catWarningLimit &&
+        catSpend >= catWarningLimit
+      ) {
+        notificationService.sendImmediateNotification(
+          `⚠️ Approaching Category Limit: ${itemCategory}`,
+          `You have spent ${threshold}% (${expenseHelpers.getCurrencySymbol(settings.currency)}${catSpend.toFixed(2)}) of your monthly limit of ${expenseHelpers.getCurrencySymbol(settings.currency)}${catBudget.amount.toFixed(2)} for ${itemCategory}.`
+        );
       }
     }
   };
-
   const handleDeleteExpense = () => {
     if (id) {
       Alert.alert(

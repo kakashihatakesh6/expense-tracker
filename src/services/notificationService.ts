@@ -92,5 +92,35 @@ export const notificationService = {
     const Notifications = await getNotifications();
     await Notifications.cancelAllScheduledNotificationsAsync();
   },
+
+  /**
+   * Send a test budget exceeded notification.
+   */
+  async sendTestBudgetExceeded(category: string, amount: number, limit: number, symbol: string = '₹'): Promise<void> {
+    await this.sendImmediateNotification(
+      '🚨 Monthly Budget Exceeded!',
+      `Your spending in ${category} (${symbol}${amount.toFixed(2)}) has gone over your monthly budget limit of ${symbol}${limit.toFixed(2)}.`
+    );
+  },
+
+  /**
+   * Send a test budget warning notification.
+   */
+  async sendTestBudgetWarning(category: string, percentage: number, symbol: string = '₹'): Promise<void> {
+    await this.sendImmediateNotification(
+      '⚠️ Budget Alert Approaching!',
+      `You've used ${percentage}% of your monthly budget limit for ${category}. Control your spending to stay within your limits!`
+    );
+  },
+
+  /**
+   * Send a test daily reminder notification.
+   */
+  async sendTestDailyReminder(): Promise<void> {
+    await this.sendImmediateNotification(
+      'Track Your Spending 💰',
+      'Did you make any purchases today? Take 10 seconds to scan your receipts or log them manually!'
+    );
+  },
 };
 
