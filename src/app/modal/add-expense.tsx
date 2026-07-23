@@ -19,11 +19,13 @@ import { Card } from '../../components/Card';
 import * as ImagePicker from 'expo-image-picker';
 import { notificationService } from '../../services/notificationService';
 import { Calendar, Clock, DollarSign, Image as ImageIcon, Check, Trash } from 'lucide-react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Header } from '../../components/Header';
 
 export default function AddExpenseModal() {
   const router = useRouter();
   const navigation = useNavigation();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   
   // Search parameters for Edit Mode
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -43,6 +45,12 @@ export default function AddExpenseModal() {
   const [receiptImage, setReceiptImage] = useState<string | undefined>(undefined);
 
   const isEditMode = !!id;
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
 
   useEffect(() => {
     if (isEditMode && id) {
@@ -208,6 +216,11 @@ export default function AddExpenseModal() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1, backgroundColor: colors.background }}
     >
+      <Header
+        title={isEditMode ? 'EDIT TRANSACTION' : 'ADD TRANSACTION'}
+        showBackButton={true}
+        onBackPress={() => router.back()}
+      />
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         {/* Amount Input Card */}
         <Card style={[styles.amountCard, { backgroundColor: colors.card }]}>
@@ -282,11 +295,19 @@ export default function AddExpenseModal() {
                   styles.categoryBadge,
                   {
                     backgroundColor: isSelected ? cat.color : colors.card,
-                    borderColor: colors.border,
+                    borderColor: isSelected ? cat.color : colors.border,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
                   },
                 ]}
                 onPress={() => setCategory(cat.name)}
               >
+                <MaterialCommunityIcons 
+                  name={cat.icon as any} 
+                  size={16} 
+                  color={isSelected ? '#FFFFFF' : (isDark ? '#818CF8' : cat.color)} 
+                />
                 <Text
                   style={[
                     styles.categoryText,
@@ -312,7 +333,7 @@ export default function AddExpenseModal() {
                   style={[
                     styles.paymentPill,
                     {
-                      backgroundColor: isSelected ? colors.primary : 'rgba(0,0,0,0.02)',
+                      backgroundColor: isSelected ? colors.primary : (isDark ? '#1E293B' : '#F5F5F7'),
                       borderColor: isSelected ? colors.primary : colors.border,
                     },
                   ]}
@@ -381,7 +402,13 @@ export default function AddExpenseModal() {
         <View style={styles.actionBtnRow}>
           {isEditMode && (
             <TouchableOpacity
-              style={[styles.deleteBtn, { borderColor: colors.danger }]}
+              style={[
+                styles.deleteBtn, 
+                { 
+                  borderColor: colors.danger, 
+                  backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2' 
+                }
+              ]}
               onPress={handleDeleteExpense}
             >
               <Trash size={20} color={colors.danger} />

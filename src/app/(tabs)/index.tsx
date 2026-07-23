@@ -41,6 +41,7 @@ import {
   Mail,
   Lightbulb,
 } from 'lucide-react-native';
+import { TransactionCard } from '../../components/transactions/TransactionCard';
 import { TransactionDetailModal } from '../../components/TransactionDetailModal';
 import { Expense } from '../../types';
 
@@ -114,9 +115,6 @@ export default function Dashboard() {
   const recentExpenses = expenses.slice(0, 4);
   const insights = expenseHelpers.getSpendingInsights(expenses, budgets, settings.currency);
 
-  const getCategoryColor = (catName: string) => {
-    return categories.find((c) => c.name === catName)?.color || '#9CA3AF';
-  };
 
   const seedSampleData = () => {
     Alert.alert(
@@ -414,13 +412,26 @@ export default function Dashboard() {
       <View style={styles.sectionHeader}>
         <TrendingUp size={18} color={colors.primary} />
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Transactions</Text>
-        <TouchableOpacity
-          style={styles.seeAllBtn}
-          onPress={() => router.push('/(tabs)/expenses')}
-        >
-          <Text style={{ color: colors.primary, fontWeight: '600' }}>See All</Text>
-          <ArrowRight size={14} color={colors.primary} />
-        </TouchableOpacity>
+        
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <TouchableOpacity
+            style={[styles.addInlineBtn, { backgroundColor: colors.primaryLight }]}
+            onPress={() => router.push('/modal/add-expense')}
+            activeOpacity={0.7}
+            accessibilityLabel="Add new transaction"
+          >
+            <Plus size={14} color={colors.primary} style={{ marginRight: 4 }} />
+            <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 12 }}>Add</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.seeAllBtn}
+            onPress={() => router.push('/(tabs)/expenses')}
+          >
+            <Text style={{ color: colors.primary, fontWeight: '600' }}>See All</Text>
+            <ArrowRight size={14} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {recentExpenses.length === 0 ? (
@@ -436,30 +447,12 @@ export default function Dashboard() {
       ) : (
         <View style={styles.recentList}>
           {recentExpenses.map((expense) => (
-            <TouchableOpacity key={expense.id} onPress={() => setSelectedTransaction(expense)}>
-              <Card style={styles.transactionItem}>
-                <View style={styles.txRow}>
-                  <View
-                    style={[
-                      styles.txCategoryDot,
-                      { backgroundColor: getCategoryColor(expense.category) },
-                    ]}
-                  />
-                  <View style={styles.txDetails}>
-                    <Text style={[styles.txMerchant, { color: colors.text }]} numberOfLines={1}>
-                      {expense.merchant}
-                    </Text>
-                    <Text style={[styles.txSub, { color: colors.textSecondary }]}>
-                      {expense.category} • {expense.date}
-                    </Text>
-                  </View>
-                  <Text style={[styles.txAmount, { color: colors.text }]}>
-                    {expenseHelpers.getCurrencySymbol(expense.currency || settings.currency)}
-                    {expense.amount.toFixed(2)}
-                  </Text>
-                </View>
-              </Card>
-            </TouchableOpacity>
+            <TransactionCard
+              key={expense.id}
+              transaction={expense}
+              onPress={() => setSelectedTransaction(expense)}
+              currencySymbol={expenseHelpers.getCurrencySymbol(expense.currency || settings.currency)}
+            />
           ))}
         </View>
       )}
@@ -1023,5 +1016,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+  },
+  addInlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
   },
 });
