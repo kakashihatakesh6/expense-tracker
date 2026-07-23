@@ -373,6 +373,15 @@ export const TransactionsScreen = () => {
           transaction={selectedTransaction}
           onClose={() => setSelectedTransaction(null)}
         />
+
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+          onPress={() => router.push('/modal/add-expense')}
+          activeOpacity={0.85}
+          accessibilityLabel="Add new transaction"
+        >
+          <Ionicons name="add" size={32} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
     </GestureHandlerRootView>
   );
@@ -494,5 +503,25 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '600',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
 });
