@@ -78,17 +78,15 @@ export const TransactionCard: React.FC<TransactionCardProps> = React.memo(({
     >
       <View style={styles.leftSection}>
         <View style={[styles.iconContainer, { backgroundColor: catStyle.bg }]}>
-          <Feather name={catStyle.icon} size={22} color={catStyle.color} />
+          <Feather name={catStyle.icon} size={18} color={catStyle.color} />
         </View>
         <View style={styles.centerSection}>
           <Text style={styles.merchantText} numberOfLines={1}>
             {transaction.merchant}
           </Text>
-          <Text style={styles.timeText}>
-            {formatToAmPm(transaction.time)}
-          </Text>
-          <Text style={[styles.categoryText, { color: catStyle.color }]}>
-            {transaction.category}
+          <Text style={styles.subText} numberOfLines={1}>
+            <Text style={{ color: catStyle.color, fontWeight: '600' }}>{transaction.category}</Text>
+            <Text style={{ color: '#666666' }}> • {formatToAmPm(transaction.time)}</Text>
           </Text>
         </View>
       </View>
@@ -119,18 +117,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 18,
-    marginBottom: 16,
+    borderRadius: 18,
+    padding: 12,
+    marginBottom: 12,
     ...Platform.select({
       ios: {
         shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.03,
-        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.02,
+        shadowRadius: 4,
       },
       android: {
-        elevation: 2,
+        elevation: 1.5,
       },
     }),
   },
@@ -145,43 +143,38 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   iconContainer: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    marginRight: 12,
   },
   centerSection: {
     flex: 1,
+    justifyContent: 'center',
   },
   merchantText: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
     color: '#111111',
     marginBottom: 2,
   },
-  timeText: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 2,
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: '600',
+  subText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   rightSection: {
     alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    height: 54,
-    paddingVertical: 2,
+    justifyContent: 'center',
   },
   dateText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666666',
+    marginBottom: 2,
   },
   amountText: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '800',
   },
 });

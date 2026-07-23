@@ -341,15 +341,14 @@ export const TransactionsScreen = () => {
             <View style={{ height: 20 }} />
             {Array.from({ length: 4 }).map((_, idx) => (
               <View key={idx} style={styles.cardSkeleton}>
-                <Skeleton width={54} height={54} borderRadius={27} style={{ marginRight: 14 }} />
+                <Skeleton width={44} height={44} borderRadius={22} style={{ marginRight: 12 }} />
                 <View style={{ flex: 1 }}>
-                  <Skeleton width="60%" height={18} borderRadius={4} style={{ marginBottom: 6 }} />
-                  <Skeleton width="40%" height={12} borderRadius={4} style={{ marginBottom: 6 }} />
-                  <Skeleton width="30%" height={12} borderRadius={4} />
+                  <Skeleton width="60%" height={16} borderRadius={4} style={{ marginBottom: 4 }} />
+                  <Skeleton width="40%" height={12} borderRadius={4} />
                 </View>
-                <View style={{ alignItems: 'flex-end', justifyContent: 'space-between', height: 54 }}>
-                  <Skeleton width={60} height={12} borderRadius={4} />
-                  <Skeleton width={80} height={20} borderRadius={4} />
+                <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                  <Skeleton width={50} height={12} borderRadius={4} style={{ marginBottom: 4 }} />
+                  <Skeleton width={70} height={16} borderRadius={4} />
                 </View>
               </View>
             ))}
@@ -495,9 +494,9 @@ const styles = StyleSheet.create({
   swipeActionsContainer: {
     flexDirection: 'row',
     width: 140,
-    marginBottom: 16,
+    marginBottom: 12,
     marginRight: 16,
-    borderRadius: 22,
+    borderRadius: 18,
     overflow: 'hidden',
   },
   swipeBtn: {
@@ -510,9 +509,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 18,
-    marginBottom: 16,
+    borderRadius: 18,
+    padding: 12,
+    marginBottom: 12,
   },
   emptyWrapper: {
     paddingHorizontal: 16,
