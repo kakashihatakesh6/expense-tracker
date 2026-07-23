@@ -33,13 +33,15 @@ import {
   Info,
   CheckCircle,
   AlertTriangle,
-  BadgeAlert,
   User,
   LogOut,
   X,
   ChevronRight,
   Mail,
   Lightbulb,
+  Calendar,
+  Target,
+  Trophy,
 } from 'lucide-react-native';
 import { TransactionCard } from '../../components/transactions/TransactionCard';
 import { TransactionDetailModal } from '../../components/TransactionDetailModal';
@@ -109,8 +111,68 @@ export default function Dashboard() {
     return expenses.filter((e) => e.date.startsWith(currentYear));
   };
 
-  const currentMonthBudget =
-    budgets.find((b) => b.category === 'All' && b.period === 'monthly')?.amount || 0;
+
+
+  const weeklyBudget = budgets.find((b) => b.category === 'All' && b.period === 'weekly');
+  const monthlyBudget = budgets.find((b) => b.category === 'All' && b.period === 'monthly');
+  const yearlyBudget = budgets.find((b) => b.category === 'All' && b.period === 'yearly');
+  const hasAnyBudget = !!(weeklyBudget || monthlyBudget || yearlyBudget);
+
+  const renderBudgetRing = (
+    label: string,
+    spend: number,
+    limit: number,
+    IconComponent: any,
+    iconColor: string
+  ) => {
+    const ratio = limit > 0 ? spend / limit : 0;
+    const percentage = Math.min(1, ratio);
+    const radius = 22;
+    const strokeWidth = 4;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - percentage * circumference;
+    const isExceeded = spend > limit;
+    const progressColor = isExceeded ? colors.danger : colors.success;
+
+    return (
+      <View style={styles.ringColumn}>
+        <View style={styles.ringWrapper}>
+          <Svg width="60" height="60">
+            {/* Background Circle */}
+            <Circle
+              cx="30"
+              cy="30"
+              r={radius}
+              stroke={isDark ? '#1e293b' : '#F3F4F6'}
+              strokeWidth={strokeWidth}
+              fill="transparent"
+            />
+            {/* Progress Circle */}
+            <Circle
+              cx="30"
+              cy="30"
+              r={radius}
+              stroke={progressColor}
+              strokeWidth={strokeWidth}
+              fill="transparent"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              transform="rotate(-90 30 30)"
+            />
+          </Svg>
+          <View style={styles.ringIconCenter}>
+            <IconComponent size={14} color={iconColor} />
+          </View>
+        </View>
+        <Text style={[styles.ringLabel, { color: colors.text }]} numberOfLines={1}>{label}</Text>
+        <Text style={[styles.ringValue, { color: isExceeded ? colors.danger : colors.textSecondary }]} numberOfLines={1}>
+          {expenseHelpers.getCurrencySymbol(settings.currency)}
+          {spend.toFixed(0)}/{limit.toFixed(0)}
+        </Text>
+      </View>
+    );
+  };
 
   const recentExpenses = expenses.slice(0, 4);
   const insights = expenseHelpers.getSpendingInsights(expenses, budgets, settings.currency);
@@ -334,47 +396,24 @@ export default function Dashboard() {
       </View>
 
       {/* 3. Budget Status Progress */}
-      {currentMonthBudget > 0 ? (
+      {hasAnyBudget ? (
         <Card style={[styles.budgetCard, { borderColor: colors.border }]}>
           <View style={styles.budgetHeader}>
-            <View>
-              <Text style={[styles.budgetTitle, { color: colors.text }]}>Monthly Budget Goal</Text>
-              <Text style={[styles.budgetSub, { color: colors.textSecondary }]}>
-                {expenseHelpers.getCurrencySymbol(settings.currency)}
-                {monthlySpend.toFixed(0)} of {expenseHelpers.getCurrencySymbol(settings.currency)}
-                {currentMonthBudget.toFixed(0)} used
-              </Text>
-            </View>
+            <Text style={[styles.budgetTitle, { color: colors.text }]}>Budget Goals</Text>
             <TouchableOpacity onPress={() => router.push('/modal/budget')}>
-              <Text style={{ color: colors.primary, fontWeight: '600' }}>Manage</Text>
+              <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>Manage</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.progressBarBg, { backgroundColor: isDark ? '#1f293d' : '#e5e7eb' }]}>
-            <View
-              style={[
-                styles.progressBarFill,
-                {
-                  backgroundColor: monthlySpend > currentMonthBudget ? colors.danger : colors.success,
-                  width: `${Math.min(100, (monthlySpend / currentMonthBudget) * 100)}%`,
-                },
-              ]}
-            />
+          <View style={styles.ringsRow}>
+            {weeklyBudget && renderBudgetRing('Weekly', weeklySpend, weeklyBudget.amount, Calendar, '#3B82F6')}
+            {monthlyBudget && renderBudgetRing('Monthly', monthlySpend, monthlyBudget.amount, Target, '#10B981')}
+            {yearlyBudget && renderBudgetRing('Yearly', yearlySpend, yearlyBudget.amount, Trophy, '#F59E0B')}
           </View>
-
-          {monthlySpend > currentMonthBudget && (
-            <View style={styles.budgetAlertTextRow}>
-              <BadgeAlert size={14} color={colors.danger} />
-              <Text style={[styles.budgetAlertText, { color: colors.danger }]}>
-                Budget limit exceeded by {expenseHelpers.getCurrencySymbol(settings.currency)}
-                {(monthlySpend - currentMonthBudget).toFixed(2)}!
-              </Text>
-            </View>
-          )}
         </Card>
       ) : (
         <Card style={styles.budgetEmptyCard}>
-          <Text style={[styles.budgetEmptyText, { color: colors.text }]}>No overall budget configured</Text>
+          <Text style={[styles.budgetEmptyText, { color: colors.text }]}>No overall budgets configured</Text>
           <TouchableOpacity
             style={[styles.budgetSetupBtn, { backgroundColor: colors.primaryLight }]}
             onPress={() => router.push('/modal/budget')}
@@ -1023,5 +1062,38 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 8,
+  },
+  ringsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  ringColumn: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  ringWrapper: {
+    width: 60,
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  ringIconCenter: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ringLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    marginBottom: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  ringValue: {
+    fontSize: 9,
+    fontWeight: '600',
   },
 });

@@ -21,7 +21,7 @@ import { expenseHelpers } from '../../utils/expenseHelpers';
 export default function BudgetModal() {
   const router = useRouter();
   const navigation = useNavigation();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   useEffect(() => {
     navigation.setOptions({
@@ -96,7 +96,7 @@ export default function BudgetModal() {
                   style={[
                     styles.categoryPill,
                     {
-                      backgroundColor: isSelected ? colors.primary : 'rgba(0,0,0,0.02)',
+                      backgroundColor: isSelected ? colors.primary : (isDark ? '#1E293B' : '#F5F5F7'),
                       borderColor: isSelected ? colors.primary : colors.border,
                     },
                   ]}
@@ -144,7 +144,8 @@ export default function BudgetModal() {
                   style={[
                     styles.periodBtn,
                     {
-                      backgroundColor: isSelected ? colors.primary : 'rgba(0,0,0,0.02)',
+                      backgroundColor: isSelected ? colors.primary : (isDark ? '#1E293B' : '#F5F5F7'),
+                      borderColor: isSelected ? colors.primary : colors.border,
                     },
                   ]}
                   onPress={() => setPeriod(p)}
@@ -189,7 +190,9 @@ export default function BudgetModal() {
                 <View style={styles.budgetInfoRow}>
                   <View>
                     <Text style={[styles.budgetName, { color: colors.text }]}>
-                      {b.category === 'All' ? 'Overall Monthly Budget' : `${b.category} Budget`}
+                      {b.category === 'All' 
+                        ? `Overall ${b.period.charAt(0).toUpperCase() + b.period.slice(1)} Budget` 
+                        : `${b.category} Budget`}
                     </Text>
                     <Text style={[styles.budgetSub, { color: colors.textSecondary }]}>
                       Period: {b.period.toUpperCase()}
@@ -201,10 +204,10 @@ export default function BudgetModal() {
                       {b.amount.toFixed(0)}
                     </Text>
                     <TouchableOpacity
-                      style={[styles.deleteBtn, { backgroundColor: colors.primaryLight }]}
+                      style={[styles.deleteBtn, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2' }]}
                       onPress={() => handleDeleteBudget(b.id, b.category)}
                     >
-                      <Trash size={14} color={colors.danger} />
+                      <Trash size={14} color="#EF4444" />
                     </TouchableOpacity>
                   </View>
                 </View>
