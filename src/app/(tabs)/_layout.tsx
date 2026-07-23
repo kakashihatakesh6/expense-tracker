@@ -49,9 +49,9 @@ export default function TabsLayout() {
         },
         headerTintColor: colors.text,
         tabBarStyle: {
-          backgroundColor: '#0F172A', // Dark slate bottom tab bar
+          backgroundColor: isDark ? '#0F172A' : '#FFFFFF',
           borderTopWidth: 1,
-          borderTopColor: '#1E293B',
+          borderTopColor: isDark ? '#1E293B' : '#EAEAEA',
           height: 72,
           paddingBottom: 10,
           paddingTop: 10,

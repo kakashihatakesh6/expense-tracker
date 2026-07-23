@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../hooks/useTheme';
 
 interface SettingsRowProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -21,8 +22,13 @@ export const SettingsRow: React.FC<SettingsRowProps> = React.memo(({
   onPress,
   rightElement,
 }) => {
+  const { colors, isDark } = useTheme();
   const Container = onPress ? TouchableOpacity : View;
   
+  // Custom dark mode icon backdrop styling to remain legible
+  const dynamicIconBg = isDark ? '#1E293B' : iconBg;
+  const dynamicIconColor = isDark ? '#818CF8' : iconColor;
+
   return (
     <Container
       style={styles.row}
@@ -31,14 +37,14 @@ export const SettingsRow: React.FC<SettingsRowProps> = React.memo(({
       accessibilityRole={onPress ? 'button' : 'none'}
       accessibilityLabel={`${title}${subtitle ? `, ${subtitle}` : ''}`}
     >
-      <View style={[styles.iconContainer, { backgroundColor: iconBg }]}>
-        <Ionicons name={icon} size={20} color={iconColor} />
+      <View style={[styles.iconContainer, { backgroundColor: dynamicIconBg }]}>
+        <Ionicons name={icon} size={20} color={dynamicIconColor} />
       </View>
       
       <View style={styles.centerSection}>
-        <Text style={styles.titleText} numberOfLines={1}>{title}</Text>
+        <Text style={[styles.titleText, { color: colors.text }]} numberOfLines={1}>{title}</Text>
         {subtitle ? (
-          <Text style={styles.subtitleText} numberOfLines={1}>{subtitle}</Text>
+          <Text style={[styles.subtitleText, { color: colors.textSecondary }]} numberOfLines={1}>{subtitle}</Text>
         ) : null}
       </View>
       
@@ -46,7 +52,7 @@ export const SettingsRow: React.FC<SettingsRowProps> = React.memo(({
         {rightElement !== undefined ? (
           rightElement
         ) : onPress ? (
-          <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         ) : null}
       </View>
     </Container>
@@ -77,11 +83,9 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111111',
   },
   subtitleText: {
     fontSize: 14,
-    color: '#666666',
     marginTop: 2,
   },
   rightSection: {

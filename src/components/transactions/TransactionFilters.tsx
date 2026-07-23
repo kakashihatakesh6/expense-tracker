@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../hooks/useTheme';
 
 interface TransactionFiltersProps {
   onDatePress: () => void;
@@ -15,30 +16,32 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = React.memo(
   selectedCategory,
   selectedSortLabel,
 }) => {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={styles.filterBtn}
+        style={[styles.filterBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
         onPress={onDatePress}
         activeOpacity={0.7}
         accessibilityLabel="Sort by date trigger"
       >
-        <Text style={styles.btnText} numberOfLines={1}>
+        <Text style={[styles.btnText, { color: colors.text }]} numberOfLines={1}>
           {selectedSortLabel}
         </Text>
-        <Ionicons name="chevron-down" size={16} color="#666666" style={styles.chevron} />
+        <Ionicons name="chevron-down" size={16} color={colors.textSecondary} style={styles.chevron} />
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.filterBtn}
+        style={[styles.filterBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
         onPress={onCategoryPress}
         activeOpacity={0.7}
         accessibilityLabel="Filter by category trigger"
       >
-        <Text style={styles.btnText} numberOfLines={1}>
+        <Text style={[styles.btnText, { color: colors.text }]} numberOfLines={1}>
           {selectedCategory ? `Category: ${selectedCategory}` : 'Category'}
         </Text>
-        <Ionicons name="chevron-down" size={16} color="#666666" style={styles.chevron} />
+        <Ionicons name="chevron-down" size={16} color={colors.textSecondary} style={styles.chevron} />
       </TouchableOpacity>
     </View>
   );
@@ -62,9 +65,7 @@ const styles = StyleSheet.create({
     height: 48,
     paddingHorizontal: 18,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA',
     ...Platform.select({
       ios: {
         shadowColor: '#000000',
@@ -80,7 +81,6 @@ const styles = StyleSheet.create({
   btnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111111',
     flex: 1,
     marginRight: 4,
   },

@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text, Pressable, Platform } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Expense } from '../../types';
+import { useTheme } from '../../hooks/useTheme';
 
 interface TransactionCardProps {
   transaction: Expense;
@@ -63,42 +64,48 @@ export const TransactionCard: React.FC<TransactionCardProps> = React.memo(({
   onPress,
   currencySymbol,
 }) => {
+  const { colors, isDark } = useTheme();
   const catStyle = getCategoryStyle(transaction.category);
   const isIncome = (transaction.category || '').toLowerCase().includes('salary') || 
                    (transaction.category || '').toLowerCase().includes('income');
+
+  // Dynamic icon colors inside circles for high visibility
+  const dynamicIconBg = isDark ? '#1E293B' : catStyle.bg;
+  const dynamicIconColor = isDark ? '#818CF8' : catStyle.color;
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        pressed && styles.cardPressed,
+        { backgroundColor: colors.card },
+        pressed && [styles.cardPressed, { backgroundColor: isDark ? '#1E293B' : '#FAFAFA' }],
       ]}
       accessibilityLabel={`Transaction card for ${transaction.merchant}`}
     >
       <View style={styles.leftSection}>
-        <View style={[styles.iconContainer, { backgroundColor: catStyle.bg }]}>
-          <Feather name={catStyle.icon} size={18} color={catStyle.color} />
+        <View style={[styles.iconContainer, { backgroundColor: dynamicIconBg }]}>
+          <Feather name={catStyle.icon} size={18} color={dynamicIconColor} />
         </View>
         <View style={styles.centerSection}>
-          <Text style={styles.merchantText} numberOfLines={1}>
+          <Text style={[styles.merchantText, { color: colors.text }]} numberOfLines={1}>
             {transaction.merchant}
           </Text>
           <Text style={styles.subText} numberOfLines={1}>
-            <Text style={{ color: catStyle.color, fontWeight: '600' }}>{transaction.category}</Text>
-            <Text style={{ color: '#666666' }}> • {formatToAmPm(transaction.time)}</Text>
+            <Text style={{ color: dynamicIconColor, fontWeight: '600' }}>{transaction.category}</Text>
+            <Text style={{ color: colors.textSecondary }}> • {formatToAmPm(transaction.time)}</Text>
           </Text>
         </View>
       </View>
 
       <View style={styles.rightSection}>
-        <Text style={styles.dateText}>
+        <Text style={[styles.dateText, { color: colors.textSecondary }]}>
           {formatToMonthDay(transaction.date)}
         </Text>
         <Text 
           style={[
             styles.amountText,
-            { color: isIncome ? '#34C759' : '#111111' }
+            { color: isIncome ? '#34C759' : colors.text }
           ]}
           numberOfLines={1}
         >
@@ -116,7 +123,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 12,
     marginBottom: 12,
@@ -134,7 +140,6 @@ const styles = StyleSheet.create({
   },
   cardPressed: {
     opacity: 0.85,
-    backgroundColor: '#FAFAFA',
   },
   leftSection: {
     flexDirection: 'row',
@@ -157,7 +162,6 @@ const styles = StyleSheet.create({
   merchantText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111111',
     marginBottom: 2,
   },
   subText: {
@@ -170,7 +174,6 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 12,
-    color: '#666666',
     marginBottom: 2,
   },
   amountText: {

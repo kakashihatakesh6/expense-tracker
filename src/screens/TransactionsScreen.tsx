@@ -201,7 +201,7 @@ export const TransactionsScreen = () => {
   const renderCategoryDropdown = () => {
     if (!showCategoryPills) return null;
     return (
-      <View style={styles.dropdownContainer}>
+      <View style={[styles.dropdownContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -215,8 +215,8 @@ export const TransactionsScreen = () => {
                 style={[
                   styles.categoryPill,
                   {
-                    backgroundColor: isSelected ? colors.primary : '#FFFFFF',
-                    borderColor: isSelected ? colors.primary : '#EAEAEA',
+                    backgroundColor: isSelected ? colors.primary : colors.card,
+                    borderColor: isSelected ? colors.primary : colors.border,
                   },
                 ]}
                 onPress={() => handleSelectCategory(item.name === 'All' ? null : item.name)}
@@ -225,7 +225,7 @@ export const TransactionsScreen = () => {
                 <Text
                   style={[
                     styles.categoryPillText,
-                    { color: isSelected ? '#FFFFFF' : '#111111' },
+                    { color: isSelected ? '#FFFFFF' : colors.text },
                   ]}
                 >
                   {item.name}
@@ -241,7 +241,7 @@ export const TransactionsScreen = () => {
   const renderSortDropdown = () => {
     if (!showSortOptions) return null;
     return (
-      <View style={styles.dropdownContainer}>
+      <View style={[styles.dropdownContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View style={styles.sortOptionsGrid}>
           {[
             { label: 'Date: Newest', value: 'date-desc' },
@@ -253,6 +253,7 @@ export const TransactionsScreen = () => {
               key={opt.value}
               style={[
                 styles.sortOptItem,
+                { backgroundColor: isDark ? '#1E293B' : '#F5F5F7' },
                 sortBy === opt.value && { backgroundColor: colors.primaryLight },
               ]}
               onPress={() => {
@@ -264,7 +265,7 @@ export const TransactionsScreen = () => {
               <Text
                 style={[
                   styles.sortOptText,
-                  { color: sortBy === opt.value ? colors.primary : '#111111' },
+                  { color: sortBy === opt.value ? colors.primary : colors.text },
                 ]}
               >
                 {opt.label}
@@ -293,7 +294,7 @@ export const TransactionsScreen = () => {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={styles.safeArea}>
+      <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
         <Header
           title="TRANSACTIONS"
           showBackButton={true}
@@ -320,7 +321,7 @@ export const TransactionsScreen = () => {
           <View style={styles.listContainer}>
             <View style={{ height: 20 }} />
             {Array.from({ length: 4 }).map((_, idx) => (
-              <View key={idx} style={styles.cardSkeleton}>
+              <View key={idx} style={[styles.cardSkeleton, { backgroundColor: colors.card }]}>
                 <Skeleton width={44} height={44} borderRadius={22} style={{ marginRight: 12 }} />
                 <View style={{ flex: 1 }}>
                   <Skeleton width="60%" height={16} borderRadius={4} style={{ marginBottom: 4 }} />
@@ -348,10 +349,10 @@ export const TransactionsScreen = () => {
             }
             ListEmptyComponent={
               <View style={styles.emptyWrapper}>
-                <View style={styles.emptyStateContainer}>
+                <View style={[styles.emptyStateContainer, { backgroundColor: colors.card }]}>
                   <Ionicons name="receipt-outline" size={64} color="#C7C7CC" style={{ marginBottom: 16 }} />
-                  <Text style={styles.emptyTitle}>No Transactions Yet</Text>
-                  <Text style={styles.emptySubtitle}>
+                   <Text style={[styles.emptyTitle, { color: colors.text }]}>No Transactions Yet</Text>
+                  <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
                     Your scanned receipts and manual expenses will appear here.
                   </Text>
                   <TouchableOpacity
@@ -380,13 +381,10 @@ export const TransactionsScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F7F8FA',
   },
 
   dropdownContainer: {
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#EAEAEA',
     paddingVertical: 12,
     zIndex: 10,
   },

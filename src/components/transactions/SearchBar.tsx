@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../hooks/useTheme';
 
 interface SearchBarProps {
   value: string;
@@ -13,15 +14,17 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({
   onChangeText,
   placeholder = 'Search transactions',
 }) => {
+  const { colors, isDark } = useTheme();
+
   return (
-    <View style={styles.container}>
-      <Ionicons name="search-outline" size={20} color="#9E9E9E" style={styles.searchIcon} />
+    <View style={[styles.container, { backgroundColor: isDark ? '#1E293B' : '#F5F5F7' }]}>
+      <Ionicons name="search-outline" size={20} color={colors.textSecondary} style={styles.searchIcon} />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { color: colors.text }]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#9E9E9E"
+        placeholderTextColor={colors.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
         accessibilityLabel="Search transactions input"
@@ -36,7 +39,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F7',
     borderRadius: 16,
     height: 48,
     paddingHorizontal: 16,
@@ -49,7 +51,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    color: '#111111',
     height: '100%',
     padding: 0,
   },

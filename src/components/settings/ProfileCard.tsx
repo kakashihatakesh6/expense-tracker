@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../hooks/useTheme';
 import { SettingsCard } from './SettingsCard';
 import { SettingsRow } from './SettingsRow';
 
@@ -19,8 +20,8 @@ export const ProfileCard: React.FC<ProfileCardProps> = React.memo(({
   onEditPress,
   onSubscriptionPress,
   onSecurityPress,
-  colors,
 }) => {
+  const { colors, isDark } = useTheme();
   const initials = (username || 'US').slice(0, 2).toUpperCase();
   
   return (
@@ -31,22 +32,22 @@ export const ProfileCard: React.FC<ProfileCardProps> = React.memo(({
         </View>
         
         <View style={styles.profileInfo}>
-          <Text style={styles.usernameText} numberOfLines={1}>{username}</Text>
-          <Text style={styles.emailText} numberOfLines={1}>{email}</Text>
+          <Text style={[styles.usernameText, { color: colors.text }]} numberOfLines={1}>{username}</Text>
+          <Text style={[styles.emailText, { color: colors.textSecondary }]} numberOfLines={1}>{email}</Text>
         </View>
         
         <TouchableOpacity
-          style={[styles.editBtn, { backgroundColor: '#F5F5F7' }]}
+          style={[styles.editBtn, { backgroundColor: isDark ? '#1E293B' : '#F5F5F7' }]}
           onPress={onEditPress}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Edit profile information"
         >
-          <Ionicons name="pencil" size={16} color="#111111" />
+          <Ionicons name="pencil" size={16} color={colors.text} />
         </TouchableOpacity>
       </View>
       
-      <View style={[styles.divider, { backgroundColor: '#EAEAEA' }]} />
+      <View style={[styles.divider, { backgroundColor: colors.border }]} />
       
       <SettingsRow
         icon="star-outline"
@@ -56,7 +57,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = React.memo(({
         onPress={onSubscriptionPress}
       />
       
-      <View style={[styles.divider, { backgroundColor: '#EAEAEA' }]} />
+      <View style={[styles.divider, { backgroundColor: colors.border }]} />
       
       <SettingsRow
         icon="shield-checkmark-outline"
@@ -96,12 +97,10 @@ const styles = StyleSheet.create({
   usernameText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111111',
     marginBottom: 4,
   },
   emailText: {
     fontSize: 15,
-    color: '#666666',
   },
   editBtn: {
     width: 36,
@@ -112,7 +111,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#EAEAEA',
     marginVertical: 4,
   },
 });

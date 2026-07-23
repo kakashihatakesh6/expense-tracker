@@ -10,7 +10,6 @@ import {
   Switch,
 } from 'react-native';
 import { useRouter, useNavigation } from 'expo-router';
-
 import { Ionicons } from '@expo/vector-icons';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useExpenseStore } from '../../store/expenseStore';
@@ -197,13 +196,19 @@ export default function SettingsScreen() {
     }
   }, [settings]);
 
-
-
   const email = user?.email || 'guest@example.com';
   const username = user?.user_metadata?.full_name || email.split('@')[0].toUpperCase();
 
+  // Dynamic Theme Helpers
+  const dividerStyle = [styles.divider, { backgroundColor: colors.border }];
+  const nestedTitleStyle = [styles.nestedTitle, { color: colors.text }];
+  const helpTextStyle = [styles.helpText, { color: colors.textSecondary }];
+  const digitLabelStyle = [styles.digitLabel, { color: colors.textSecondary }];
+  const clockColonStyle = [styles.clockColon, { color: colors.textSecondary }];
+  const apiKeyLabelStyle = [styles.apiKeyLabel, { color: colors.textSecondary }];
+
   return (
-    <View style={styles.screenContainer}>
+    <View style={[styles.screenContainer, { backgroundColor: colors.background }]}>
       <Header
         title="SETTINGS"
         showBackButton={true}
@@ -245,7 +250,7 @@ export default function SettingsScreen() {
             subtitle={`Base Currency: ${settings.currency}`}
             onPress={selectCurrency}
           />
-          <View style={styles.divider} />
+          <View style={dividerStyle} />
           <SettingsRow
             icon="cloud-done-outline"
             iconBg="#F0FDF4"
@@ -270,7 +275,7 @@ export default function SettingsScreen() {
             activeTrackColor={colors.primary}
           />
           
-          <View style={styles.divider} />
+          <View style={dividerStyle} />
           
           <SettingsRow
             icon="options-outline"
@@ -280,7 +285,7 @@ export default function SettingsScreen() {
             onPress={() => Alert.alert('Categories', 'Default expense categories are configured.')}
           />
           
-          <View style={styles.divider} />
+          <View style={dividerStyle} />
           
           <ToggleRow
             icon="moon-outline"
@@ -295,12 +300,12 @@ export default function SettingsScreen() {
 
           {settings.notificationsEnabled && (
             <>
-              <View style={styles.divider} />
+              <View style={dividerStyle} />
               
               {/* Daily reminder clock adjusting */}
               <View style={styles.nestedRowBlock}>
-                <Text style={styles.nestedTitle}>Reminder Alert Schedule</Text>
-                <Text style={styles.helpText}>
+                <Text style={nestedTitleStyle}>Reminder Alert Schedule</Text>
+                <Text style={helpTextStyle}>
                   Configure the target hour and minutes to receive your daily check-in.
                 </Text>
                 
@@ -318,7 +323,7 @@ export default function SettingsScreen() {
                       <Text style={[styles.clockDigit, { color: colors.text }]}>
                         {String(settings.notificationHour !== undefined ? (settings.notificationHour % 12 === 0 ? 12 : settings.notificationHour % 12) : 8).padStart(2, '0')}
                       </Text>
-                      <Text style={styles.digitLabel}>HOUR</Text>
+                      <Text style={digitLabelStyle}>HOUR</Text>
                     </View>
                     
                     <TouchableOpacity 
@@ -330,7 +335,7 @@ export default function SettingsScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  <Text style={styles.clockColon}>:</Text>
+                  <Text style={clockColonStyle}>:</Text>
 
                   <View style={styles.clockDigitContainer}>
                     <TouchableOpacity 
@@ -345,7 +350,7 @@ export default function SettingsScreen() {
                       <Text style={[styles.clockDigit, { color: colors.text }]}>
                         {String(settings.notificationMinute !== undefined ? settings.notificationMinute : 0).padStart(2, '0')}
                       </Text>
-                      <Text style={styles.digitLabel}>MIN</Text>
+                      <Text style={digitLabelStyle}>MIN</Text>
                     </View>
                     
                     <TouchableOpacity 
@@ -369,14 +374,14 @@ export default function SettingsScreen() {
                 </View>
               </View>
 
-              <View style={styles.divider} />
+              <View style={dividerStyle} />
 
               {/* Budget Limit Warning */}
               <View style={styles.nestedRowBlock}>
                 <View style={styles.inlineSwitchRow}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.nestedTitle}>Budget Limit Warning</Text>
-                    <Text style={styles.helpText}>Get alerted when approaching your spending limits.</Text>
+                    <Text style={nestedTitleStyle}>Budget Limit Warning</Text>
+                    <Text style={helpTextStyle}>Get alerted when approaching your spending limits.</Text>
                   </View>
                   <Switch
                     value={settings.budgetWarningEnabled}
@@ -418,12 +423,12 @@ export default function SettingsScreen() {
                 )}
               </View>
 
-              <View style={styles.divider} />
+              <View style={dividerStyle} />
 
               {/* Notification Testing Center */}
               <View style={styles.nestedRowBlock}>
-                <Text style={styles.nestedTitle}>Notification Testing Center</Text>
-                <Text style={[styles.helpText, { marginBottom: 12 }]}>
+                <Text style={nestedTitleStyle}>Notification Testing Center</Text>
+                <Text style={[helpTextStyle, { marginBottom: 12 }]}>
                   Test how spending alerts will render natively on your device.
                 </Text>
                 
@@ -480,7 +485,7 @@ export default function SettingsScreen() {
             subtitle="Generate table file format for Excel"
             onPress={handleExportCSV}
           />
-          <View style={styles.divider} />
+          <View style={dividerStyle} />
           <SettingsRow
             icon="cloud-upload-outline"
             iconBg="#F0FDF4"
@@ -489,7 +494,7 @@ export default function SettingsScreen() {
             subtitle="Export full JSON payload database"
             onPress={handleExportJSON}
           />
-          <View style={styles.divider} />
+          <View style={dividerStyle} />
           <ToggleRow
             icon="analytics-outline"
             iconBg="#F5F3FF"
@@ -500,7 +505,7 @@ export default function SettingsScreen() {
             onValueChange={setAiCategorizationEnabled}
             activeTrackColor={colors.primary}
           />
-          <View style={styles.divider} />
+          <View style={dividerStyle} />
           <ToggleRow
             icon="scan-outline"
             iconBg="#FEF3C7"
@@ -514,9 +519,9 @@ export default function SettingsScreen() {
 
           {settings.ocrEngine === 'cloud' && (
             <>
-              <View style={styles.divider} />
+              <View style={dividerStyle} />
               <View style={styles.apiKeyContainer}>
-                <Text style={styles.apiKeyLabel}>GEMINI API KEY</Text>
+                <Text style={apiKeyLabelStyle}>GEMINI API KEY</Text>
                 <TextInput
                   style={[styles.apiKeyInput, { color: colors.text, borderColor: colors.border }]}
                   value={settings.geminiApiKey}
@@ -527,7 +532,7 @@ export default function SettingsScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-                <Text style={styles.helpText}>
+                <Text style={helpTextStyle}>
                   This key is stored securely on your device. It enables extracting real data from receipts and invoices.
                 </Text>
               </View>
@@ -545,7 +550,7 @@ export default function SettingsScreen() {
             title="Contact Support"
             onPress={() => Alert.alert('Support', 'Contact support at help@spendly.com')}
           />
-          <View style={styles.divider} />
+          <View style={dividerStyle} />
           <SettingsRow
             icon="lock-closed-outline"
             iconBg="#E0F2FE"
@@ -553,7 +558,7 @@ export default function SettingsScreen() {
             title="Privacy Policy"
             onPress={() => Alert.alert('Privacy', 'Privacy policy can be read on spendly.com/privacy')}
           />
-          <View style={styles.divider} />
+          <View style={dividerStyle} />
           <SettingsRow
             icon="document-text-outline"
             iconBg="#FAF5FF"
@@ -561,7 +566,7 @@ export default function SettingsScreen() {
             title="Terms & Conditions"
             onPress={() => Alert.alert('Terms', 'Terms of service are available on spendly.com/terms')}
           />
-          <View style={styles.divider} />
+          <View style={dividerStyle} />
           <SettingsRow
             icon="information-circle-outline"
             iconBg="#FFF1F2"
@@ -584,7 +589,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    backgroundColor: '#F7F8FA',
   },
   scrollView: {
     flex: 1,
@@ -593,10 +597,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 40,
   },
-
   divider: {
     height: 1,
-    backgroundColor: '#EAEAEA',
     marginVertical: 4,
   },
   nestedRowBlock: {
@@ -605,12 +607,10 @@ const styles = StyleSheet.create({
   nestedTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#111111',
     marginBottom: 4,
   },
   helpText: {
     fontSize: 12,
-    color: '#666666',
     lineHeight: 16,
   },
   clockCard: {
@@ -652,14 +652,12 @@ const styles = StyleSheet.create({
   digitLabel: {
     fontSize: 8,
     fontWeight: '800',
-    color: '#666666',
     marginTop: 2,
     letterSpacing: 0.5,
   },
   clockColon: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#666666',
     marginHorizontal: 12,
     bottom: 2,
   },
@@ -735,7 +733,6 @@ const styles = StyleSheet.create({
   apiKeyLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#666666',
     letterSpacing: 0.5,
     marginBottom: 6,
   },

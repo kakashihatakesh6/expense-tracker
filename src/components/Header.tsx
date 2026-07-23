@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import { useTheme } from '../hooks/useTheme';
 
 interface HeaderProps {
   title?: string;
@@ -38,6 +39,12 @@ export const Header: React.FC<HeaderProps> = ({
   notificationCount = 0,
 }) => {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
+
+  const btnStyle = [
+    styles.iconButton,
+    { backgroundColor: isDark ? '#1E293B' : '#F5F5F5' },
+  ];
 
   const renderLeftAction = () => {
     if (showBackButton) {
@@ -45,11 +52,11 @@ export const Header: React.FC<HeaderProps> = ({
         <Pressable
           onPress={onBackPress}
           style={({ pressed }) => [
-            styles.iconButton,
+            ...btnStyle,
             pressed && styles.buttonPressed,
           ]}
         >
-          <Feather name="chevron-left" size={24} color="#333333" style={{ marginRight: 2 }} />
+          <Feather name="chevron-left" size={24} color={colors.text} style={{ marginRight: 2 }} />
         </Pressable>
       );
     }
@@ -59,11 +66,11 @@ export const Header: React.FC<HeaderProps> = ({
         <Pressable
           onPress={onLeftPress}
           style={({ pressed }) => [
-            styles.iconButton,
+            ...btnStyle,
             pressed && styles.buttonPressed,
           ]}
         >
-          <Feather name={leftIcon} size={20} color="#333333" />
+          <Feather name={leftIcon} size={20} color={colors.text} />
         </Pressable>
       );
     }
@@ -73,11 +80,11 @@ export const Header: React.FC<HeaderProps> = ({
         <Pressable
           onPress={onMenuPress}
           style={({ pressed }) => [
-            styles.iconButton,
+            ...btnStyle,
             pressed && styles.buttonPressed,
           ]}
         >
-          <Feather name="menu" size={20} color="#333333" />
+          <Feather name="menu" size={20} color={colors.text} />
         </Pressable>
       );
     }
@@ -91,11 +98,11 @@ export const Header: React.FC<HeaderProps> = ({
         <Pressable
           onPress={onRightPress}
           style={({ pressed }) => [
-            styles.iconButton,
+            ...btnStyle,
             pressed && styles.buttonPressed,
           ]}
         >
-          <Feather name={rightIcon} size={20} color="#333333" />
+          <Feather name={rightIcon} size={20} color={colors.text} />
         </Pressable>
       );
     }
@@ -105,11 +112,11 @@ export const Header: React.FC<HeaderProps> = ({
         <Pressable
           onPress={onNotificationPress}
           style={({ pressed }) => [
-            styles.iconButton,
+            ...btnStyle,
             pressed && styles.buttonPressed,
           ]}
         >
-          <Feather name="bell" size={20} color="#333333" />
+          <Feather name="bell" size={20} color={colors.text} />
           
           {/* Red Notification Badge */}
           {notificationCount > 0 && (
@@ -135,12 +142,14 @@ export const Header: React.FC<HeaderProps> = ({
         {
           paddingTop: insets.top + 8,
           height: 65 + insets.top,
+          backgroundColor: colors.card,
+          borderBottomColor: colors.border,
         },
       ]}
     >
       {/* Title Container (Absolutely Centered) */}
       <View style={[styles.titleContainer, { top: insets.top }]}>
-        <Text style={styles.titleText}>{title}</Text>
+        <Text style={[styles.titleText, { color: colors.text }]}>{title}</Text>
       </View>
 
       {/* Left Action Button */}
@@ -154,14 +163,11 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    // Subtle shadow below header
     ...Platform.select({
       ios: {
         shadowColor: '#000000',
@@ -187,7 +193,6 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
     fontSize: 22,
     fontWeight: '800',
-    color: '#111111',
     letterSpacing: 2,
     textAlign: 'center',
   },
@@ -198,10 +203,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
-    // Subtle elevation/shadow for the button
     ...Platform.select({
       ios: {
         shadowColor: '#000000',
@@ -229,7 +232,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#EF4444', // Red circle
+    backgroundColor: '#EF4444',
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
     alignItems: 'center',

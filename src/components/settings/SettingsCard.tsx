@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, StyleProp, ViewStyle, Platform } from 'react-native';
+import { useTheme } from '../../hooks/useTheme';
 
 interface SettingsCardProps {
   children: React.ReactNode;
@@ -7,14 +8,14 @@ interface SettingsCardProps {
 }
 
 export const SettingsCard: React.FC<SettingsCardProps> = React.memo(({ children, style }) => {
-  return <View style={[styles.card, style]}>{children}</View>;
+  const { colors } = useTheme();
+  return <View style={[styles.card, { backgroundColor: colors.card }, style]}>{children}</View>;
 });
 
 SettingsCard.displayName = 'SettingsCard';
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 20,
     marginBottom: 18,
