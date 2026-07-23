@@ -1,37 +1,33 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   ScrollView,
-  TouchableOpacity,
-  Switch,
   Alert,
   TextInput,
+  TouchableOpacity,
+  Switch,
 } from 'react-native';
 import { useRouter, useNavigation } from 'expo-router';
-import { Header } from '../../components/Header';
+
+import { Ionicons } from '@expo/vector-icons';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useExpenseStore } from '../../store/expenseStore';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
-import { Card } from '../../components/Card';
 import { exportService } from '../../services/exportService';
 import { notificationService } from '../../services/notificationService';
 import { expenseHelpers } from '../../utils/expenseHelpers';
-import {
-  Moon,
-  Sun,
-  Globe,
-  Bell,
-  Download,
-  Upload,
-  Cpu,
-  Info,
-  IndianRupee,
-  LogOut,
-  AlertTriangle,
-} from 'lucide-react-native';
+import { Header } from '../../components/Header';
+
+// Redesigned components
+import { SettingsCard } from '../../components/settings/SettingsCard';
+import { SettingsRow } from '../../components/settings/SettingsRow';
+import { ToggleRow } from '../../components/settings/ToggleRow';
+import { ProfileCard } from '../../components/settings/ProfileCard';
+import { SectionHeader } from '../../components/settings/SectionHeader';
+import { SignOutButton } from '../../components/settings/SignOutButton';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -43,6 +39,7 @@ export default function SettingsScreen() {
       headerShown: false,
     });
   }, [navigation]);
+
   const user = useAuthStore((state) => state.user);
   const signOut = useAuthStore((state) => state.signOut);
   
@@ -60,7 +57,7 @@ export default function SettingsScreen() {
   } = useSettingsStore();
   const { expenses } = useExpenseStore();
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     Alert.alert(
       'Sign Out',
       'Are you sure you want to sign out of your account?',
@@ -75,14 +72,14 @@ export default function SettingsScreen() {
         }
       ]
     );
-  };
+  }, [signOut]);
 
-  const handleThemeChange = () => {
+  const handleThemeChange = useCallback(() => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
-  };
+  }, [theme, setTheme]);
 
-  const selectCurrency = () => {
+  const selectCurrency = useCallback(() => {
     Alert.alert(
       'Select Currency',
       'Choose your preferred base currency symbol:',
@@ -94,9 +91,9 @@ export default function SettingsScreen() {
         { text: 'Cancel', style: 'cancel' },
       ]
     );
-  };
+  }, [setCurrency]);
 
-  const handleExportCSV = async () => {
+  const handleExportCSV = useCallback(async () => {
     if (expenses.length === 0) {
       Alert.alert('No Data', 'You have no transactions to export.');
       return;
@@ -107,9 +104,9 @@ export default function SettingsScreen() {
     } catch (e) {
       Alert.alert('Export Failed', 'An error occurred during CSV creation.');
     }
-  };
+  }, [expenses]);
 
-  const handleExportJSON = async () => {
+  const handleExportJSON = useCallback(async () => {
     if (expenses.length === 0) {
       Alert.alert('No Data', 'You have no transactions to backup.');
       return;
@@ -120,16 +117,16 @@ export default function SettingsScreen() {
     } catch (e) {
       Alert.alert('Backup Failed', 'An error occurred during backup creation.');
     }
-  };
+  }, [expenses]);
 
-  const formatTime = (hour: number, minute: number) => {
+  const formatTime = useCallback((hour: number, minute: number) => {
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 === 0 ? 12 : hour % 12;
     const displayMinute = minute < 10 ? `0${minute}` : minute;
     return `${displayHour}:${displayMinute} ${ampm}`;
-  };
+  }, []);
 
-  const handleAdjustHour = (amount: number) => {
+  const handleAdjustHour = useCallback((amount: number) => {
     const currentHour = settings.notificationHour !== undefined ? settings.notificationHour : 20;
     const currentMinute = settings.notificationMinute !== undefined ? settings.notificationMinute : 0;
     const nextHour = (currentHour + amount + 24) % 24;
@@ -137,9 +134,9 @@ export default function SettingsScreen() {
     if (settings.notificationsEnabled) {
       notificationService.scheduleDailyReminder(nextHour, currentMinute);
     }
-  };
+  }, [settings, setNotificationTime]);
 
-  const handleAdjustMinute = (amount: number) => {
+  const handleAdjustMinute = useCallback((amount: number) => {
     const currentHour = settings.notificationHour !== undefined ? settings.notificationHour : 20;
     const currentMinute = settings.notificationMinute !== undefined ? settings.notificationMinute : 0;
     const nextMinute = (currentMinute + amount + 60) % 60;
@@ -147,9 +144,9 @@ export default function SettingsScreen() {
     if (settings.notificationsEnabled) {
       notificationService.scheduleDailyReminder(currentHour, nextMinute);
     }
-  };
+  }, [settings, setNotificationTime]);
 
-  const handleToggleNotifications = async (enabled: boolean) => {
+  const handleToggleNotifications = useCallback(async (enabled: boolean) => {
     setNotificationsEnabled(enabled);
     if (enabled) {
       const granted = await notificationService.requestPermissions();
@@ -165,17 +162,17 @@ export default function SettingsScreen() {
     } else {
       await notificationService.cancelAllScheduledNotifications();
     }
-  };
+  }, [settings, setNotificationsEnabled]);
 
-  const handleTestDailyReminder = async () => {
+  const handleTestDailyReminder = useCallback(async () => {
     try {
       await notificationService.sendTestDailyReminder();
     } catch {
       Alert.alert('Error', 'Failed to send test reminder notification.');
     }
-  };
+  }, []);
 
-  const handleTestWarning = async () => {
+  const handleTestWarning = useCallback(async () => {
     try {
       await notificationService.sendTestBudgetWarning(
         'Groceries',
@@ -185,9 +182,9 @@ export default function SettingsScreen() {
     } catch {
       Alert.alert('Error', 'Failed to send test warning notification.');
     }
-  };
+  }, [settings]);
 
-  const handleTestExceeded = async () => {
+  const handleTestExceeded = useCallback(async () => {
     try {
       await notificationService.sendTestBudgetExceeded(
         'Dining Out',
@@ -198,124 +195,112 @@ export default function SettingsScreen() {
     } catch {
       Alert.alert('Error', 'Failed to send test exceeded notification.');
     }
-  };
+  }, [settings]);
+
+
+
+  const email = user?.email || 'guest@example.com';
+  const username = user?.user_metadata?.full_name || email.split('@')[0].toUpperCase();
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={styles.screenContainer}>
       <Header
         title="SETTINGS"
         showBackButton={true}
         onBackPress={() => router.back()}
-        rightIcon="log-out"
-        onRightPress={handleLogout}
+        rightIcon="check"
+        onRightPress={() => {
+          Alert.alert('Success', 'Settings saved successfully!');
+        }}
       />
-      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.content}>
-        
-        {/* Section: Account */}
+      
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Profile Section */}
         {user && (
           <>
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>MY ACCOUNT</Text>
-            <Card style={styles.settingsCard}>
-              <View style={styles.row}>
-                <View style={[styles.rowIconBg, { backgroundColor: colors.primaryLight }]}>
-                  <Info size={20} color={colors.primary} />
-                </View>
-                <View style={styles.rowInfo}>
-                  <Text style={[styles.rowLabel, { color: colors.text }]}>Logged in as</Text>
-                  <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                    {user.email}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-              <TouchableOpacity style={styles.row} onPress={handleLogout} activeOpacity={0.7}>
-                <View style={[styles.rowIconBg, { backgroundColor: colors.danger + '20' }]}>
-                  <LogOut size={20} color={colors.danger} />
-                </View>
-                <View style={styles.rowInfo}>
-                  <Text style={[styles.rowLabel, { color: colors.danger }]}>Sign Out</Text>
-                  <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                    Log out of your Supabase account
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Card>
+            <SectionHeader title="Profile Information" />
+            <ProfileCard
+              email={email}
+              username={username}
+              onEditPress={() => Alert.alert('Edit Profile', 'Profile edit screen is coming soon!')}
+              onSubscriptionPress={() => Alert.alert('Subscriptions', 'Your account is on the Free Tier.')}
+              onSecurityPress={() => Alert.alert('Security', 'Your connection to Supabase cloud is secure.')}
+              colors={colors}
+            />
           </>
         )}
 
-        {/* Section: Appearance */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>PREFERENCES</Text>
-        <Card style={styles.settingsCard}>
-          <TouchableOpacity style={styles.row} onPress={handleThemeChange} activeOpacity={0.7}>
-            <View style={[styles.rowIconBg, { backgroundColor: colors.primaryLight }]}>
-              {theme === 'dark' ? (
-                <Moon size={20} color={colors.primary} />
-              ) : (
-                <Sun size={20} color={colors.primary} />
-              )}
-            </View>
-            <View style={styles.rowInfo}>
-              <Text style={[styles.rowLabel, { color: colors.text }]}>Dark Mode</Text>
-              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                {theme === 'dark' ? 'Enabled' : 'Disabled'}
-              </Text>
-            </View>
-            <Switch
-              value={theme === 'dark'}
-              onValueChange={handleThemeChange}
-              thumbColor={theme === 'dark' ? colors.primary : '#f4f3f4'}
-              trackColor={{ false: '#767577', true: colors.primaryLight }}
-            />
-          </TouchableOpacity>
+        {/* Payment Methods */}
+        <SectionHeader title="Payment Methods" />
+        <SettingsCard>
+          <SettingsRow
+            icon="card-outline"
+            iconBg="#E0F2FE"
+            iconColor="#0EA5E9"
+            title="Main Balance"
+            subtitle={`Base Currency: ${settings.currency}`}
+            onPress={selectCurrency}
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="cloud-done-outline"
+            iconBg="#F0FDF4"
+            iconColor="#16A34A"
+            title="Connected Banks"
+            subtitle={user ? 'Synced with Supabase Cloud' : 'Offline Cache Database'}
+            onPress={() => Alert.alert('Bank Integration', 'Open banking links are coming soon!')}
+          />
+        </SettingsCard>
 
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          <TouchableOpacity style={styles.row} onPress={selectCurrency} activeOpacity={0.7}>
-            <View style={[styles.rowIconBg, { backgroundColor: colors.primaryLight }]}>
-              <IndianRupee size={20} color={colors.primary} />
-            </View>
-            <View style={styles.rowInfo}>
-              <Text style={[styles.rowLabel, { color: colors.text }]}>Currency Symbol</Text>
-              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                Current: {settings.currency}
-              </Text>
-            </View>
-            <Globe size={18} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </Card>
-
-        {/* Section: System Alerts */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>NOTIFICATIONS</Text>
-        <Card style={styles.settingsCard}>
-          <View style={styles.row}>
-            <View style={[styles.rowIconBg, { backgroundColor: colors.primaryLight }]}>
-              <Bell size={20} color={colors.primary} />
-            </View>
-            <View style={styles.rowInfo}>
-              <Text style={[styles.rowLabel, { color: colors.text }]}>Daily Reminders</Text>
-              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                Remind me to log spending daily at {formatTime(settings.notificationHour || 20, settings.notificationMinute || 0)}
-              </Text>
-            </View>
-            <Switch
-              value={settings.notificationsEnabled}
-              onValueChange={handleToggleNotifications}
-              thumbColor={settings.notificationsEnabled ? colors.primary : '#f4f3f4'}
-              trackColor={{ false: '#767577', true: colors.primaryLight }}
-            />
-          </View>
+        {/* Notifications & Appearance */}
+        <SectionHeader title="Notifications & Appearance" />
+        <SettingsCard>
+          <ToggleRow
+            icon="notifications-outline"
+            iconBg="#FFE5EC"
+            iconColor="#FF6B81"
+            title="Push Notifications"
+            subtitle={settings.notificationsEnabled ? `Reminders Active • ${formatTime(settings.notificationHour || 20, settings.notificationMinute || 0)}` : 'Notifications Muted'}
+            value={settings.notificationsEnabled}
+            onValueChange={handleToggleNotifications}
+            activeTrackColor={colors.primary}
+          />
+          
+          <View style={styles.divider} />
+          
+          <SettingsRow
+            icon="options-outline"
+            iconBg="#FAF5FF"
+            iconColor="#9333EA"
+            title="Categories Management"
+            onPress={() => Alert.alert('Categories', 'Default expense categories are configured.')}
+          />
+          
+          <View style={styles.divider} />
+          
+          <ToggleRow
+            icon="moon-outline"
+            iconBg="#FEF9C3"
+            iconColor="#CA8A04"
+            title="Dark Mode / App Theme"
+            subtitle={theme === 'dark' ? 'Dark theme active' : 'Light theme active'}
+            value={theme === 'dark'}
+            onValueChange={handleThemeChange}
+            activeTrackColor={colors.primary}
+          />
 
           {settings.notificationsEnabled && (
             <>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <View style={styles.divider} />
               
-              {/* Centered Clock Style Time Picker */}
-              <View style={styles.timeSection}>
-                <Text style={[styles.nestedTitle, { color: colors.text }]}>Reminder Alert Schedule</Text>
-                <Text style={[styles.apiKeyHelp, { color: colors.textSecondary, marginBottom: 12 }]}>
+              {/* Daily reminder clock adjusting */}
+              <View style={styles.nestedRowBlock}>
+                <Text style={styles.nestedTitle}>Reminder Alert Schedule</Text>
+                <Text style={styles.helpText}>
                   Configure the target hour and minutes to receive your daily check-in.
                 </Text>
                 
@@ -333,7 +318,7 @@ export default function SettingsScreen() {
                       <Text style={[styles.clockDigit, { color: colors.text }]}>
                         {String(settings.notificationHour !== undefined ? (settings.notificationHour % 12 === 0 ? 12 : settings.notificationHour % 12) : 8).padStart(2, '0')}
                       </Text>
-                      <Text style={[styles.digitLabel, { color: colors.textSecondary }]}>HOUR</Text>
+                      <Text style={styles.digitLabel}>HOUR</Text>
                     </View>
                     
                     <TouchableOpacity 
@@ -345,7 +330,7 @@ export default function SettingsScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  <Text style={[styles.clockColon, { color: colors.textSecondary }]}>:</Text>
+                  <Text style={styles.clockColon}>:</Text>
 
                   <View style={styles.clockDigitContainer}>
                     <TouchableOpacity 
@@ -360,7 +345,7 @@ export default function SettingsScreen() {
                       <Text style={[styles.clockDigit, { color: colors.text }]}>
                         {String(settings.notificationMinute !== undefined ? settings.notificationMinute : 0).padStart(2, '0')}
                       </Text>
-                      <Text style={[styles.digitLabel, { color: colors.textSecondary }]}>MIN</Text>
+                      <Text style={styles.digitLabel}>MIN</Text>
                     </View>
                     
                     <TouchableOpacity 
@@ -383,23 +368,21 @@ export default function SettingsScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
-              
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-              
-              {/* Budget Warning Configuration with Symmetric Segmented Selector */}
+
+              <View style={styles.divider} />
+
+              {/* Budget Limit Warning */}
               <View style={styles.nestedRowBlock}>
-                <View style={styles.row}>
-                  <View style={styles.rowInfo}>
-                    <Text style={[styles.nestedTitle, { color: colors.text }]}>Budget Limit Warning</Text>
-                    <Text style={[styles.apiKeyHelp, { color: colors.textSecondary }]}>
-                      Get alerted when approaching your spending limits.
-                    </Text>
+                <View style={styles.inlineSwitchRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.nestedTitle}>Budget Limit Warning</Text>
+                    <Text style={styles.helpText}>Get alerted when approaching your spending limits.</Text>
                   </View>
                   <Switch
                     value={settings.budgetWarningEnabled}
                     onValueChange={setBudgetWarningEnabled}
-                    thumbColor={settings.budgetWarningEnabled ? colors.primary : '#f4f3f4'}
-                    trackColor={{ false: '#767577', true: colors.primaryLight }}
+                    trackColor={{ false: '#767577', true: colors.primary }}
+                    thumbColor={settings.budgetWarningEnabled ? '#FFFFFF' : '#f4f3f4'}
                   />
                 </View>
                 
@@ -435,12 +418,12 @@ export default function SettingsScreen() {
                 )}
               </View>
 
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <View style={styles.divider} />
 
-              {/* Push Testing Control Room - Beautiful list items */}
+              {/* Notification Testing Center */}
               <View style={styles.nestedRowBlock}>
-                <Text style={[styles.nestedTitle, { color: colors.text, marginBottom: 4 }]}>Notification Testing Center</Text>
-                <Text style={[styles.apiKeyHelp, { color: colors.textSecondary, marginBottom: 12 }]}>
+                <Text style={styles.nestedTitle}>Notification Testing Center</Text>
+                <Text style={[styles.helpText, { marginBottom: 12 }]}>
                   Test how spending alerts will render natively on your device.
                 </Text>
                 
@@ -451,7 +434,7 @@ export default function SettingsScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={[styles.testIconBg, { backgroundColor: colors.primaryLight }]}>
-                      <Bell size={16} color={colors.primary} />
+                      <Ionicons name="notifications" size={16} color={colors.primary} />
                     </View>
                     <Text style={[styles.testListText, { color: colors.text }]}>Send Mock Daily Reminder</Text>
                     <Text style={[styles.testListBadge, { color: colors.primary, backgroundColor: colors.primaryLight }]}>Test</Text>
@@ -463,7 +446,7 @@ export default function SettingsScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={[styles.testIconBg, { backgroundColor: colors.warning + '20' }]}>
-                      <AlertTriangle size={16} color={colors.warning} />
+                      <Ionicons name="alert-circle" size={16} color={colors.warning} />
                     </View>
                     <Text style={[styles.testListText, { color: colors.text }]}>Send Budget Warning ({settings.budgetWarningThreshold || 80}%)</Text>
                     <Text style={[styles.testListBadge, { color: colors.warning, backgroundColor: colors.warning + '20' }]}>Test</Text>
@@ -475,7 +458,7 @@ export default function SettingsScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={[styles.testIconBg, { backgroundColor: colors.danger + '20' }]}>
-                      <AlertTriangle size={16} color={colors.danger} />
+                      <Ionicons name="alert" size={16} color={colors.danger} />
                     </View>
                     <Text style={[styles.testListText, { color: colors.text }]}>Send Budget Exceeded Alert</Text>
                     <Text style={[styles.testListBadge, { color: colors.danger, backgroundColor: colors.danger + '20' }]}>Test</Text>
@@ -484,84 +467,56 @@ export default function SettingsScreen() {
               </View>
             </>
           )}
-        </Card>
+        </SettingsCard>
 
-        {/* Section: Data Operations */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>DATA MANAGEMENT</Text>
-        <Card style={styles.settingsCard}>
-          <TouchableOpacity style={styles.row} onPress={handleExportCSV} activeOpacity={0.7}>
-            <View style={[styles.rowIconBg, { backgroundColor: colors.primaryLight }]}>
-              <Download size={20} color={colors.primary} />
-            </View>
-            <View style={styles.rowInfo}>
-              <Text style={[styles.rowLabel, { color: colors.text }]}>Export CSV Report</Text>
-              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                Generate table file format for Excel
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          <TouchableOpacity style={styles.row} onPress={handleExportJSON} activeOpacity={0.7}>
-            <View style={[styles.rowIconBg, { backgroundColor: colors.primaryLight }]}>
-              <Upload size={20} color={colors.primary} />
-            </View>
-            <View style={styles.rowInfo}>
-              <Text style={[styles.rowLabel, { color: colors.text }]}>Create Backup</Text>
-              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                Export full JSON file payload database
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </Card>
-
-        {/* Section: System & Engines */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>INTELLIGENCE ENGINE</Text>
-        <Card style={styles.settingsCard}>
-          <View style={styles.row}>
-            <View style={[styles.rowIconBg, { backgroundColor: colors.primaryLight }]}>
-              <Cpu size={20} color={colors.primary} />
-            </View>
-            <View style={styles.rowInfo}>
-              <Text style={[styles.rowLabel, { color: colors.text }]}>AI Categorization</Text>
-              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                Predict categories automatically after scan
-              </Text>
-            </View>
-            <Switch
-              value={settings.aiCategorizationEnabled}
-              onValueChange={setAiCategorizationEnabled}
-              thumbColor={settings.aiCategorizationEnabled ? colors.primary : '#f4f3f4'}
-              trackColor={{ false: '#767577', true: colors.primaryLight }}
-            />
-          </View>
-
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          <View style={styles.row}>
-            <View style={[styles.rowIconBg, { backgroundColor: colors.primaryLight }]}>
-              <Cpu size={20} color={colors.primary} />
-            </View>
-            <View style={styles.rowInfo}>
-              <Text style={[styles.rowLabel, { color: colors.text }]}>Cloud OCR Engine</Text>
-              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                Use Google Gemini API for actual receipt scanning
-              </Text>
-            </View>
-            <Switch
-              value={settings.ocrEngine === 'cloud'}
-              onValueChange={(enabled) => setOcrEngine(enabled ? 'cloud' : 'mock')}
-              thumbColor={settings.ocrEngine === 'cloud' ? colors.primary : '#f4f3f4'}
-              trackColor={{ false: '#767577', true: colors.primaryLight }}
-            />
-          </View>
+        {/* Data & Intelligence */}
+        <SectionHeader title="Data & Intelligence" />
+        <SettingsCard>
+          <SettingsRow
+            icon="download-outline"
+            iconBg="#E0F2FE"
+            iconColor="#0EA5E9"
+            title="Export CSV Report"
+            subtitle="Generate table file format for Excel"
+            onPress={handleExportCSV}
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="cloud-upload-outline"
+            iconBg="#F0FDF4"
+            iconColor="#16A34A"
+            title="Create Backup"
+            subtitle="Export full JSON payload database"
+            onPress={handleExportJSON}
+          />
+          <View style={styles.divider} />
+          <ToggleRow
+            icon="analytics-outline"
+            iconBg="#F5F3FF"
+            iconColor="#7C3AED"
+            title="AI Categorization"
+            subtitle="Predict categories automatically after scanning"
+            value={settings.aiCategorizationEnabled}
+            onValueChange={setAiCategorizationEnabled}
+            activeTrackColor={colors.primary}
+          />
+          <View style={styles.divider} />
+          <ToggleRow
+            icon="scan-outline"
+            iconBg="#FEF3C7"
+            iconColor="#D97706"
+            title="Cloud OCR Engine"
+            subtitle="Use Google Gemini API for receipt parsing"
+            value={settings.ocrEngine === 'cloud'}
+            onValueChange={(enabled) => setOcrEngine(enabled ? 'cloud' : 'mock')}
+            activeTrackColor={colors.primary}
+          />
 
           {settings.ocrEngine === 'cloud' && (
             <>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <View style={styles.divider} />
               <View style={styles.apiKeyContainer}>
-                <Text style={[styles.apiKeyLabel, { color: colors.textSecondary }]}>GEMINI API KEY</Text>
+                <Text style={styles.apiKeyLabel}>GEMINI API KEY</Text>
                 <TextInput
                   style={[styles.apiKeyInput, { color: colors.text, borderColor: colors.border }]}
                   value={settings.geminiApiKey}
@@ -572,120 +527,91 @@ export default function SettingsScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-                <Text style={[styles.apiKeyHelp, { color: colors.textSecondary }]}>
+                <Text style={styles.helpText}>
                   This key is stored securely on your device. It enables extracting real data from receipts and invoices.
                 </Text>
               </View>
             </>
           )}
-        </Card>
+        </SettingsCard>
 
-        {/* Section: Version info */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>APPLICATION</Text>
-        <Card style={styles.settingsCard}>
-          <View style={styles.row}>
-            <View style={[styles.rowIconBg, { backgroundColor: colors.primaryLight }]}>
-              <IconRow icon={Info} color={colors.primary} />
-            </View>
-            <View style={styles.rowInfo}>
-              <Text style={[styles.rowLabel, { color: colors.text }]}>Version</Text>
-              <Text style={[styles.rowSub, { color: colors.textSecondary }]}>
-                v1.0.0 (Production Build)
-              </Text>
-            </View>
-          </View>
-        </Card>
+        {/* Help & Information */}
+        <SectionHeader title="Help & Information" />
+        <SettingsCard>
+          <SettingsRow
+            icon="chatbubble-ellipses-outline"
+            iconBg="#F0FDF4"
+            iconColor="#16A34A"
+            title="Contact Support"
+            onPress={() => Alert.alert('Support', 'Contact support at help@spendly.com')}
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="lock-closed-outline"
+            iconBg="#E0F2FE"
+            iconColor="#0EA5E9"
+            title="Privacy Policy"
+            onPress={() => Alert.alert('Privacy', 'Privacy policy can be read on spendly.com/privacy')}
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="document-text-outline"
+            iconBg="#FAF5FF"
+            iconColor="#9333EA"
+            title="Terms & Conditions"
+            onPress={() => Alert.alert('Terms', 'Terms of service are available on spendly.com/terms')}
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="information-circle-outline"
+            iconBg="#FFF1F2"
+            iconColor="#E11D48"
+            title="About App"
+            subtitle="v1.0.0 (Production Build)"
+            onPress={() => Alert.alert('About', 'Spendly: Expense AI Tracker built with React Native & Supabase.')}
+          />
+        </SettingsCard>
+
+        {/* Danger Zone: Sign Out */}
+        <SignOutButton onPress={handleLogout} />
+        
         <View style={{ height: 40 }} />
-      </View>
-    </ScrollView>
+      </ScrollView>
     </View>
   );
 }
 
-// Inline Helper
-const IconRow = ({ icon: Icon, color }: { icon: any; color: string }) => {
-  return <Icon size={20} color={color} />;
-};
-
 const styles = StyleSheet.create({
-  container: {
+  screenContainer: {
     flex: 1,
-    padding: 16,
+    backgroundColor: '#F7F8FA',
   },
-  content: {
-    paddingBottom: 24,
+  scrollView: {
+    flex: 1,
   },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginTop: 20,
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  settingsCard: {
-    paddingVertical: 4,
+  scrollContent: {
     paddingHorizontal: 16,
-    marginVertical: 4,
+    paddingBottom: 40,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  rowIconBg: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  rowInfo: {
-    flex: 1,
-  },
-  rowLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  rowSub: {
-    fontSize: 11,
-    marginTop: 2,
-  },
+
   divider: {
     height: 1,
-    width: '100%',
-  },
-  apiKeyContainer: {
-    paddingVertical: 12,
-  },
-  apiKeyLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    marginBottom: 6,
-  },
-  apiKeyInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    height: 40,
-    paddingHorizontal: 12,
-    fontSize: 13,
-  },
-  apiKeyHelp: {
-    fontSize: 10,
-    marginTop: 6,
-    lineHeight: 14,
+    backgroundColor: '#EAEAEA',
+    marginVertical: 4,
   },
   nestedRowBlock: {
     paddingVertical: 14,
   },
   nestedTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
+    color: '#111111',
+    marginBottom: 4,
   },
-  timeSection: {
-    paddingVertical: 14,
+  helpText: {
+    fontSize: 12,
+    color: '#666666',
+    lineHeight: 16,
   },
   clockCard: {
     flexDirection: 'row',
@@ -693,8 +619,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 14,
     borderWidth: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     marginTop: 8,
   },
   clockDigitContainer: {
@@ -726,12 +652,14 @@ const styles = StyleSheet.create({
   digitLabel: {
     fontSize: 8,
     fontWeight: '800',
+    color: '#666666',
     marginTop: 2,
     letterSpacing: 0.5,
   },
   clockColon: {
     fontSize: 26,
     fontWeight: '800',
+    color: '#666666',
     marginHorizontal: 12,
     bottom: 2,
   },
@@ -748,6 +676,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
+  inlineSwitchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   segmentedContainer: {
     flexDirection: 'row',
     borderRadius: 10,
@@ -763,7 +695,6 @@ const styles = StyleSheet.create({
   },
   segmentedText: {
     fontSize: 11,
-    fontWeight: '700',
   },
   testList: {
     marginTop: 8,
@@ -797,5 +728,22 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 6,
     overflow: 'hidden',
+  },
+  apiKeyContainer: {
+    paddingVertical: 12,
+  },
+  apiKeyLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#666666',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  apiKeyInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    height: 40,
+    paddingHorizontal: 12,
+    fontSize: 13,
   },
 });

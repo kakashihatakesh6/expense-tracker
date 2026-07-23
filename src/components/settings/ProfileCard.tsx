@@ -1,0 +1,118 @@
+import React from 'react';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { SettingsCard } from './SettingsCard';
+import { SettingsRow } from './SettingsRow';
+
+interface ProfileCardProps {
+  email: string;
+  username: string;
+  onEditPress?: () => void;
+  onSubscriptionPress?: () => void;
+  onSecurityPress?: () => void;
+  colors: any;
+}
+
+export const ProfileCard: React.FC<ProfileCardProps> = React.memo(({
+  email,
+  username,
+  onEditPress,
+  onSubscriptionPress,
+  onSecurityPress,
+  colors,
+}) => {
+  const initials = (username || 'US').slice(0, 2).toUpperCase();
+  
+  return (
+    <SettingsCard>
+      <View style={styles.profileHeader}>
+        <View style={[styles.avatar, { backgroundColor: colors.primaryLight }]}>
+          <Text style={[styles.avatarText, { color: colors.primary }]}>{initials}</Text>
+        </View>
+        
+        <View style={styles.profileInfo}>
+          <Text style={styles.usernameText} numberOfLines={1}>{username}</Text>
+          <Text style={styles.emailText} numberOfLines={1}>{email}</Text>
+        </View>
+        
+        <TouchableOpacity
+          style={[styles.editBtn, { backgroundColor: '#F5F5F7' }]}
+          onPress={onEditPress}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Edit profile information"
+        >
+          <Ionicons name="pencil" size={16} color="#111111" />
+        </TouchableOpacity>
+      </View>
+      
+      <View style={[styles.divider, { backgroundColor: '#EAEAEA' }]} />
+      
+      <SettingsRow
+        icon="star-outline"
+        iconBg="#E8F1F5"
+        iconColor="#35B6D5"
+        title="Manage Subscription"
+        onPress={onSubscriptionPress}
+      />
+      
+      <View style={[styles.divider, { backgroundColor: '#EAEAEA' }]} />
+      
+      <SettingsRow
+        icon="shield-checkmark-outline"
+        iconBg="#E8F5E9"
+        iconColor="#34C759"
+        title="Security Center"
+        onPress={onSecurityPress}
+      />
+    </SettingsCard>
+  );
+});
+
+ProfileCard.displayName = 'ProfileCard';
+
+const styles = StyleSheet.create({
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  avatarText: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  profileInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  usernameText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111111',
+    marginBottom: 4,
+  },
+  emailText: {
+    fontSize: 15,
+    color: '#666666',
+  },
+  editBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#EAEAEA',
+    marginVertical: 4,
+  },
+});

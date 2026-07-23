@@ -8,7 +8,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { useRouter, useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useExpenseStore } from '../store/expenseStore';
@@ -16,6 +16,7 @@ import { useSettingsStore } from '../store/settingsStore';
 import { useTheme } from '../hooks/useTheme';
 import { useCurrencyStore } from '../store/currencyStore';
 import { expenseHelpers } from '../utils/expenseHelpers';
+import { Header } from '../components/Header';
 import { SearchBar } from '../components/transactions/SearchBar';
 import { TransactionFilters } from '../components/transactions/TransactionFilters';
 import { MonthlySummaryCard } from '../components/transactions/MonthlySummaryCard';
@@ -31,7 +32,7 @@ export const TransactionsScreen = () => {
   const router = useRouter();
   const navigation = useNavigation();
   const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
+
 
   useEffect(() => {
     navigation.setOptions({
@@ -195,34 +196,7 @@ export const TransactionsScreen = () => {
     setShowSortOptions(prev => false);
   }, []);
 
-  const renderHeader = () => (
-    <View style={[styles.header, { paddingTop: insets.top, height: 70 + insets.top }]}>
-      {/* Centered Title */}
-      <View style={[styles.headerTitleContainer, { top: insets.top }]}>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          Transactions
-        </Text>
-      </View>
 
-      <TouchableOpacity
-        style={[styles.headerBtn, { zIndex: 2 }]}
-        onPress={() => router.back()}
-        activeOpacity={0.7}
-        accessibilityLabel="Go back"
-      >
-        <Ionicons name="arrow-back" size={24} color="#111111" />
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.headerBtn, { zIndex: 2 }]}
-        onPress={toggleSortOptions}
-        activeOpacity={0.7}
-        accessibilityLabel="Sorting options dropdown trigger"
-      >
-        <Ionicons name="options-outline" size={24} color="#111111" />
-      </TouchableOpacity>
-    </View>
-  );
 
   const renderCategoryDropdown = () => {
     if (!showCategoryPills) return null;
@@ -320,7 +294,13 @@ export const TransactionsScreen = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.safeArea}>
-        {renderHeader()}
+        <Header
+          title="TRANSACTIONS"
+          showBackButton={true}
+          onBackPress={() => router.back()}
+          rightIcon="sliders"
+          onRightPress={toggleSortOptions}
+        />
 
         <Animated.View entering={SlideInUp.duration(400)}>
           <SearchBar value={search} onChangeText={setSearch} />
@@ -402,50 +382,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7F8FA',
   },
-  header: {
-    backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EAEAEA',
-  },
-  headerTitleContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-    height: 70,
-  },
-  headerBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  headerTitle: {
-    fontSize: 34,
-    fontWeight: '700',
-    color: '#111111',
-    textAlign: 'center',
-  },
+
   dropdownContainer: {
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
