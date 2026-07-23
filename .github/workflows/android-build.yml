@@ -47,36 +47,38 @@ jobs:
     if: |
       (github.event_name == 'workflow_dispatch') ||
       (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
     steps:
       - name: Checkout repository
-        if: ${{ secrets.EXPO_TOKEN != '' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ env.EXPO_TOKEN != '' || github.event_name == 'workflow_dispatch' }}
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        if: ${{ secrets.EXPO_TOKEN != '' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ env.EXPO_TOKEN != '' || github.event_name == 'workflow_dispatch' }}
         uses: actions/setup-node@v4
         with:
           node-version: '22.14.0'
           cache: 'npm'
 
       - name: Install dependencies
-        if: ${{ secrets.EXPO_TOKEN != '' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ env.EXPO_TOKEN != '' || github.event_name == 'workflow_dispatch' }}
         run: npm ci
 
       - name: Setup Expo / EAS CLI
-        if: ${{ secrets.EXPO_TOKEN != '' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ env.EXPO_TOKEN != '' || github.event_name == 'workflow_dispatch' }}
         uses: expo/expo-github-action@v8
         with:
           expo-version: latest
           eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+          token: ${{ env.EXPO_TOKEN }}
 
       - name: Run Expo Doctor
-        if: ${{ secrets.EXPO_TOKEN != '' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ env.EXPO_TOKEN != '' || github.event_name == 'workflow_dispatch' }}
         run: npx expo-doctor
 
       - name: Trigger EAS Build (Build Android Apk)
-        if: ${{ secrets.EXPO_TOKEN != '' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ env.EXPO_TOKEN != '' || github.event_name == 'workflow_dispatch' }}
         run: |
           PROFILE="${{ github.event.inputs.eas_profile || 'preview' }}"
           PLATFORM="${{ github.event.inputs.platform || 'android' }}"
