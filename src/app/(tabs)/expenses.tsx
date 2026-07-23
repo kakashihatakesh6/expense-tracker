@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
+import { Header } from '../../components/Header';
 import { useExpenseStore } from '../../store/expenseStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTheme } from '../../hooks/useTheme';
@@ -30,7 +31,14 @@ import { expenseHelpers } from '../../utils/expenseHelpers';
 
 export default function ExpensesList() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { colors } = useTheme();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
   
   const { expenses, categories, fetchExpenses, deleteExpense } = useExpenseStore();
   const { settings } = useSettingsStore();
@@ -124,7 +132,15 @@ export default function ExpensesList() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <Header
+          title="TRANSACTIONS"
+          showBackButton={true}
+          onBackPress={() => router.back()}
+          rightIcon="plus"
+          onRightPress={() => router.push('/modal/add-expense')}
+        />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Search & Sort Panel */}
         <View style={styles.filterBar}>
           <View style={[styles.searchBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -303,6 +319,7 @@ export default function ExpensesList() {
           transaction={selectedTransaction}
           onClose={() => setSelectedTransaction(null)}
         />
+        </View>
       </View>
     </GestureHandlerRootView>
   );

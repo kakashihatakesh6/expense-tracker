@@ -6,7 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Alert,
 } from 'react-native';
+import { useRouter, useNavigation } from 'expo-router';
+import { Header } from '../../components/Header';
 import { useExpenseStore } from '../../store/expenseStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTheme } from '../../hooks/useTheme';
@@ -27,7 +30,15 @@ import {
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function AnalyticsScreen() {
+  const router = useRouter();
+  const navigation = useNavigation();
   const { colors, isDark } = useTheme();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
   const { expenses, categories, fetchExpenses } = useExpenseStore();
   const { settings } = useSettingsStore();
 
@@ -198,7 +209,17 @@ export default function AnalyticsScreen() {
   const categorySpending = expenseHelpers.getCategorySpending(expenses, categories);
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <Header
+        title="ANALYTICS"
+        showBackButton={true}
+        onBackPress={() => router.back()}
+        rightIcon="download"
+        onRightPress={() => {
+          Alert.alert('Export Report', 'Your PDF & CSV reports are being prepared for download.');
+        }}
+      />
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {expenses.length === 0 ? (
         <View style={{ marginTop: 60 }}>
           <EmptyState
@@ -355,6 +376,7 @@ export default function AnalyticsScreen() {
         </View>
       )}
     </ScrollView>
+    </View>
   );
 }
 

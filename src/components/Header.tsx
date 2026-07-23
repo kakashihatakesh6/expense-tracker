@@ -11,18 +11,122 @@ import { Feather } from '@expo/vector-icons';
 
 interface HeaderProps {
   title?: string;
+  // Left action options
+  showBackButton?: boolean;
+  onBackPress?: () => void;
   onMenuPress?: () => void;
+  leftIcon?: keyof typeof Feather.glyphMap;
+  onLeftPress?: () => void;
+
+  // Right action options
+  rightIcon?: keyof typeof Feather.glyphMap;
+  onRightPress?: () => void;
   onNotificationPress?: () => void;
   notificationCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   title = 'SPENDLY',
+  showBackButton = false,
+  onBackPress,
   onMenuPress,
+  leftIcon,
+  onLeftPress,
+  rightIcon,
+  onRightPress,
   onNotificationPress,
   notificationCount = 0,
 }) => {
   const insets = useSafeAreaInsets();
+
+  const renderLeftAction = () => {
+    if (showBackButton) {
+      return (
+        <Pressable
+          onPress={onBackPress}
+          style={({ pressed }) => [
+            styles.iconButton,
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <Feather name="chevron-left" size={24} color="#333333" style={{ marginRight: 2 }} />
+        </Pressable>
+      );
+    }
+
+    if (leftIcon && onLeftPress) {
+      return (
+        <Pressable
+          onPress={onLeftPress}
+          style={({ pressed }) => [
+            styles.iconButton,
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <Feather name={leftIcon} size={20} color="#333333" />
+        </Pressable>
+      );
+    }
+
+    if (onMenuPress) {
+      return (
+        <Pressable
+          onPress={onMenuPress}
+          style={({ pressed }) => [
+            styles.iconButton,
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <Feather name="menu" size={20} color="#333333" />
+        </Pressable>
+      );
+    }
+
+    return <View style={styles.placeholder} />;
+  };
+
+  const renderRightAction = () => {
+    if (rightIcon && onRightPress) {
+      return (
+        <Pressable
+          onPress={onRightPress}
+          style={({ pressed }) => [
+            styles.iconButton,
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <Feather name={rightIcon} size={20} color="#333333" />
+        </Pressable>
+      );
+    }
+
+    if (onNotificationPress) {
+      return (
+        <Pressable
+          onPress={onNotificationPress}
+          style={({ pressed }) => [
+            styles.iconButton,
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <Feather name="bell" size={20} color="#333333" />
+          
+          {/* Red Notification Badge */}
+          {notificationCount > 0 && (
+            <View style={styles.badge}>
+              {notificationCount > 9 && (
+                <Text style={styles.badgeText}>
+                  {notificationCount > 99 ? '99+' : notificationCount}
+                </Text>
+              )}
+            </View>
+          )}
+        </Pressable>
+      );
+    }
+
+    return <View style={styles.placeholder} />;
+  };
 
   return (
     <View
@@ -39,50 +143,11 @@ export const Header: React.FC<HeaderProps> = ({
         <Text style={styles.titleText}>{title}</Text>
       </View>
 
-      {/* Left Action Button (Menu) */}
-      <View style={styles.actionWrapper}>
-        {onMenuPress ? (
-          <Pressable
-            onPress={onMenuPress}
-            style={({ pressed }) => [
-              styles.iconButton,
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            <Feather name="menu" size={20} color="#333333" />
-          </Pressable>
-        ) : (
-          <View style={styles.placeholder} />
-        )}
-      </View>
+      {/* Left Action Button */}
+      <View style={styles.actionWrapper}>{renderLeftAction()}</View>
 
-      {/* Right Action Button (Notifications) */}
-      <View style={styles.actionWrapper}>
-        {onNotificationPress ? (
-          <Pressable
-            onPress={onNotificationPress}
-            style={({ pressed }) => [
-              styles.iconButton,
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            <Feather name="bell" size={20} color="#333333" />
-            
-            {/* Red Notification Badge */}
-            {notificationCount > 0 && (
-              <View style={styles.badge}>
-                {notificationCount > 9 && (
-                  <Text style={styles.badgeText}>
-                    {notificationCount > 99 ? '99+' : notificationCount}
-                  </Text>
-                )}
-              </View>
-            )}
-          </Pressable>
-        ) : (
-          <View style={styles.placeholder} />
-        )}
-      </View>
+      {/* Right Action Button */}
+      <View style={styles.actionWrapper}>{renderRightAction()}</View>
     </View>
   );
 };
@@ -171,7 +236,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: {
-    // Hidden unless custom text badge is preferred (e.g. for numbers)
     display: 'none',
   },
 });

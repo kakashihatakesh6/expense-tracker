@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
   TextInput,
 } from 'react-native';
+import { useRouter, useNavigation } from 'expo-router';
+import { Header } from '../../components/Header';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useExpenseStore } from '../../store/expenseStore';
 import { useAuthStore } from '../../store/authStore';
@@ -32,7 +34,15 @@ import {
 } from 'lucide-react-native';
 
 export default function SettingsScreen() {
+  const router = useRouter();
+  const navigation = useNavigation();
   const { colors, theme, isDark } = useTheme();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
   const user = useAuthStore((state) => state.user);
   const signOut = useAuthStore((state) => state.signOut);
   
@@ -191,7 +201,15 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <Header
+        title="SETTINGS"
+        showBackButton={true}
+        onBackPress={() => router.back()}
+        rightIcon="log-out"
+        onRightPress={handleLogout}
+      />
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
         
         {/* Section: Account */}
@@ -580,6 +598,7 @@ export default function SettingsScreen() {
         <View style={{ height: 40 }} />
       </View>
     </ScrollView>
+    </View>
   );
 }
 

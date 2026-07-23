@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,7 +9,8 @@ import {
   Alert,
   FlatList,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
+import { Header } from '../../components/Header';
 import { useExpenseStore } from '../../store/expenseStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTheme } from '../../hooks/useTheme';
@@ -19,7 +20,14 @@ import { expenseHelpers } from '../../utils/expenseHelpers';
 
 export default function BudgetModal() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { colors } = useTheme();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
   const { budgets, categories, saveBudget, deleteBudget } = useExpenseStore();
   const { settings } = useSettingsStore();
 
@@ -65,7 +73,15 @@ export default function BudgetModal() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} keyboardShouldPersistTaps="handled">
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <Header
+        title="SET BUDGET"
+        showBackButton={true}
+        onBackPress={() => router.back()}
+        rightIcon="check"
+        onRightPress={handleSaveBudget}
+      />
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} keyboardShouldPersistTaps="handled">
       <View style={styles.content}>
         
         {/* Set budget limits form */}
@@ -199,6 +215,7 @@ export default function BudgetModal() {
       </View>
       <View style={{ height: 40 }} />
     </ScrollView>
+    </View>
   );
 }
 
