@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,7 +10,7 @@ import {
   TextInput,
   Image,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { ocrService, OcrResult } from '../../services/ocrService';
 import { aiService } from '../../services/aiService';
@@ -18,11 +18,19 @@ import { useExpenseStore } from '../../store/expenseStore';
 import { useTheme } from '../../hooks/useTheme';
 import { Card } from '../../components/Card';
 import { Image as ImageIcon, Check, RefreshCw, Smartphone, Sparkles } from 'lucide-react-native';
+import { Header } from '../../components/Header';
 
 export default function ScreenshotModal() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const navigation = useNavigation();
+  const { colors, isDark } = useTheme();
   const { addExpense } = useExpenseStore();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
 
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [presetName, setPresetName] = useState<string | undefined>(undefined);
@@ -131,41 +139,55 @@ export default function ScreenshotModal() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      {!imageUri && !isScanning ? (
-        <View style={styles.pickerBox}>
-          <Smartphone size={64} color={colors.primary} />
-          <Text style={[styles.title, { color: colors.text, marginTop: 16 }]}>UPI Payment Screen</Text>
-          <Text style={[styles.subText, { color: colors.textSecondary }]}>
-            Import screenshots from Google Pay, PhonePe, Paytm or bank apps to extract transaction values instantly.
-          </Text>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <Header
+        title="IMPORT UPI"
+        showBackButton={true}
+        onBackPress={() => router.back()}
+      />
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+        {!imageUri && !isScanning ? (
+          <View style={styles.pickerBox}>
+            <View style={[styles.phoneIconBg, { backgroundColor: colors.primaryLight }]}>
+              <Smartphone size={32} color={colors.primary} />
+            </View>
+            <Text style={[styles.title, { color: colors.text }]}>UPI Payment Screen</Text>
+            <Text style={[styles.subText, { color: colors.textSecondary }]}>
+              Import screenshots from Google Pay, PhonePe, Paytm or bank apps to extract transaction values instantly.
+            </Text>
 
-          <TouchableOpacity
-            style={[styles.pickerBtn, { backgroundColor: colors.primary }]}
-            onPress={() => pickScreenshot()}
-            activeOpacity={0.8}
-          >
-            <ImageIcon size={20} color="#FFF" style={{ marginRight: 8 }} />
-            <Text style={styles.pickerBtnText}>Select Screenshot</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.pickerBtn, { backgroundColor: colors.primary }]}
+              onPress={() => pickScreenshot()}
+              activeOpacity={0.8}
+            >
+              <ImageIcon size={20} color="#FFF" style={{ marginRight: 8 }} />
+              <Text style={styles.pickerBtnText}>Select Screenshot</Text>
+            </TouchableOpacity>
 
-          {/* Preset Demos */}
-          <Text style={[styles.demoLabel, { color: colors.textSecondary }]}>CHOOSE PRESET SCREEN (MOCK)</Text>
-          <View style={styles.demoRow}>
-            {['gpay_upi', 'phonepe_upi', 'paytm_upi'].map((preset) => (
-              <TouchableOpacity
-                key={preset}
-                style={[styles.demoBtn, { borderColor: colors.border }]}
-                onPress={() => pickScreenshot(preset)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.demoText, { color: colors.text }]}>
-                  {preset.split('_')[0].toUpperCase()}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {/* Preset Demos */}
+            <Text style={[styles.demoLabel, { color: colors.textSecondary }]}>CHOOSE PRESET SCREEN (MOCK)</Text>
+            <View style={styles.demoRow}>
+              {['gpay_upi', 'phonepe_upi', 'paytm_upi'].map((preset) => (
+                <TouchableOpacity
+                  key={preset}
+                  style={[
+                    styles.demoBtn,
+                    {
+                      borderColor: colors.border,
+                      backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+                    }
+                  ]}
+                  onPress={() => pickScreenshot(preset)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.demoText, { color: colors.text }]}>
+                    {preset.split('_')[0].toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
       ) : isScanning ? (
         <View style={styles.scanningOverlay}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -324,8 +346,9 @@ export default function ScreenshotModal() {
           </View>
         )
       )}
-      <View style={{ height: 40 }} />
-    </ScrollView>
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </View>
   );
 }
 
@@ -461,10 +484,18 @@ const styles = StyleSheet.create({
   previewInput: {
     borderWidth: 1,
     borderRadius: 8,
-    height: 40,
+    height: 44,
     paddingHorizontal: 12,
     fontSize: 14,
     marginBottom: 12,
+  },
+  phoneIconBg: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   rowFields: {
     flexDirection: 'row',

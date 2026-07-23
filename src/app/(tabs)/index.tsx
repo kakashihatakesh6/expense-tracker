@@ -127,8 +127,8 @@ export default function Dashboard() {
   ) => {
     const ratio = limit > 0 ? spend / limit : 0;
     const percentage = Math.min(1, ratio);
-    const radius = 22;
-    const strokeWidth = 4;
+    const radius = 28;
+    const strokeWidth = 5;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - percentage * circumference;
     const isExceeded = spend > limit;
@@ -137,11 +137,11 @@ export default function Dashboard() {
     return (
       <View style={styles.ringColumn}>
         <View style={styles.ringWrapper}>
-          <Svg width="60" height="60">
+          <Svg width="74" height="74">
             {/* Background Circle */}
             <Circle
-              cx="30"
-              cy="30"
+              cx="37"
+              cy="37"
               r={radius}
               stroke={isDark ? '#1e293b' : '#F3F4F6'}
               strokeWidth={strokeWidth}
@@ -149,8 +149,8 @@ export default function Dashboard() {
             />
             {/* Progress Circle */}
             <Circle
-              cx="30"
-              cy="30"
+              cx="37"
+              cy="37"
               r={radius}
               stroke={progressColor}
               strokeWidth={strokeWidth}
@@ -158,11 +158,11 @@ export default function Dashboard() {
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
-              transform="rotate(-90 30 30)"
+              transform="rotate(-90 37 37)"
             />
           </Svg>
           <View style={styles.ringIconCenter}>
-            <IconComponent size={14} color={iconColor} />
+            <IconComponent size={20} color={iconColor} />
           </View>
         </View>
         <Text style={[styles.ringLabel, { color: colors.text }]} numberOfLines={1}>{label}</Text>
@@ -452,25 +452,13 @@ export default function Dashboard() {
         <TrendingUp size={18} color={colors.primary} />
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Transactions</Text>
         
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <TouchableOpacity
-            style={[styles.addInlineBtn, { backgroundColor: colors.primaryLight }]}
-            onPress={() => router.push('/modal/add-expense')}
-            activeOpacity={0.7}
-            accessibilityLabel="Add new transaction"
-          >
-            <Plus size={14} color={colors.primary} style={{ marginRight: 4 }} />
-            <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 12 }}>Add</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.seeAllBtn}
-            onPress={() => router.push('/(tabs)/expenses')}
-          >
-            <Text style={{ color: colors.primary, fontWeight: '600' }}>See All</Text>
-            <ArrowRight size={14} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.seeAllBtn}
+          onPress={() => router.push('/(tabs)/expenses')}
+        >
+          <Text style={{ color: colors.primary, fontWeight: '600' }}>See All</Text>
+          <ArrowRight size={14} color={colors.primary} />
+        </TouchableOpacity>
       </View>
 
       {recentExpenses.length === 0 ? (
@@ -1074,11 +1062,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   ringWrapper: {
-    width: 60,
-    height: 60,
+    width: 74,
+    height: 74,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   ringIconCenter: {
     position: 'absolute',
@@ -1086,14 +1074,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ringLabel: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '800',
     marginBottom: 2,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   ringValue: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '600',
   },
 });
