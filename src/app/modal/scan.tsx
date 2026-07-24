@@ -13,7 +13,8 @@ import {
 import { Camera, CameraView } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as Device from 'expo-device';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
+import { Header } from '../../components/Header';
 import { ocrService, OcrResult } from '../../services/ocrService';
 import { aiService } from '../../services/aiService';
 import { useExpenseStore } from '../../store/expenseStore';
@@ -25,7 +26,14 @@ import { Camera as CameraIcon, Check, RefreshCw, Sparkles, X, Image as ImageIcon
 
 export default function OCRScanModal() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { colors } = useTheme();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
   
   const { addExpense } = useExpenseStore();
   const { settings } = useSettingsStore();
@@ -238,9 +246,15 @@ export default function OCRScanModal() {
 
   if (!photoUri && !isScanning) {
     return (
-      <View style={[styles.fullScreenContainer, { backgroundColor: '#090D16' }]}>
-        {/* Viewfinder Area (Top 68% approximately) */}
-        <View style={styles.viewfinderContainer}>
+      <View style={{ flex: 1, backgroundColor: '#090D16' }}>
+        <Header
+          title="SCAN RECEIPT"
+          showBackButton={true}
+          onBackPress={() => router.back()}
+        />
+        <View style={[styles.fullScreenContainer, { backgroundColor: '#090D16' }]}>
+          {/* Viewfinder Area (Top 68% approximately) */}
+          <View style={styles.viewfinderContainer}>
           {Device.isDevice ? (
             <CameraView 
               style={StyleSheet.absoluteFillObject} 
@@ -364,11 +378,18 @@ export default function OCRScanModal() {
           </View>
         </View>
       </View>
+    </View>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <Header
+        title="SCAN RECEIPT"
+        showBackButton={true}
+        onBackPress={() => router.back()}
+      />
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {!photoUri && !isScanning ? (
         <View style={styles.cameraBox}>
           {Device.isDevice ? (
@@ -598,6 +619,7 @@ export default function OCRScanModal() {
       )}
       <View style={{ height: 40 }} />
     </ScrollView>
+    </View>
   );
 }
 
@@ -896,7 +918,7 @@ const styles = StyleSheet.create({
   },
   headerControls: {
     position: 'absolute',
-    top: 50,
+    top: 16,
     left: 20,
     right: 20,
     flexDirection: 'row',
