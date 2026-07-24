@@ -165,10 +165,14 @@ export default function Dashboard() {
             <IconComponent size={20} color={iconColor} />
           </View>
         </View>
-        <Text style={[styles.ringLabel, { color: colors.text }]} numberOfLines={1}>{label}</Text>
-        <Text style={[styles.ringValue, { color: isExceeded ? colors.danger : colors.textSecondary }]} numberOfLines={1}>
-          {expenseHelpers.getCurrencySymbol(settings.currency)}
-          {spend.toFixed(0)}/{limit.toFixed(0)}
+        <Text style={[styles.ringLabel, { color: isDark ? '#F1F5F9' : '#220f2aff' }]} numberOfLines={1}>{label}</Text>
+        <Text style={styles.ringValue} numberOfLines={1}>
+          <Text style={{ color: isExceeded ? colors.danger : colors.text, fontWeight: '700' }}>
+            {expenseHelpers.getCurrencySymbol(settings.currency)}{spend.toFixed(0)}
+          </Text>
+          <Text style={{ color: isDark ? '#64748B' : '#94A3B8', fontWeight: '500' }}>
+            /{limit.toFixed(0)}
+          </Text>
         </Text>
       </View>
     );
@@ -239,12 +243,9 @@ export default function Dashboard() {
   const renderMiniCategoryChart = () => {
     const filteredExpenses = getFilteredExpensesForActiveTab();
     const data = expenseHelpers.getCategorySpending(filteredExpenses, categories);
-    if (data.length === 0) return null;
-
-    let accumulatedAngle = 0;
-    const radius = 40;
-    const strokeWidth = 14;
-    const circumference = 2 * Math.PI * radius;
+    
+    let chartData = data;
+    let isZeroState = false;
 
     const convert = useCurrencyStore.getState().convert;
     const totalFilteredSpend = filteredExpenses.reduce((sum, e) => {
@@ -252,12 +253,35 @@ export default function Dashboard() {
       return sum + amt;
     }, 0);
 
+    if (totalFilteredSpend === 0) {
+      isZeroState = true;
+      const fallbackCats = categories.length >= 4 ? categories.slice(0, 4) : [
+        { name: 'Food', color: '#FF6B81', icon: 'food' },
+        { name: 'Travel', color: '#4EA8DE', icon: 'car' },
+        { name: 'Shopping', color: '#FFB703', icon: 'cart' },
+        { name: 'Bills', color: '#72EFDD', icon: 'bill' }
+      ];
+      chartData = fallbackCats.map((cat) => ({
+        name: cat.name,
+        amount: 1, // equal weight
+        color: cat.color,
+        percentage: 0, // display 0%
+        icon: cat.icon || 'help'
+      }));
+    }
+
+    let accumulatedAngle = 0;
+    const radius = 40;
+    const strokeWidth = 14;
+    const circumference = 2 * Math.PI * radius;
+    const totalWeight = isZeroState ? 4 : totalFilteredSpend;
+
     return (
       <View style={styles.chartContainer}>
         <Svg height="110" width="110" viewBox="0 0 110 110">
-          <Circle cx="55" cy="55" r={radius} stroke={colors.border} strokeWidth={strokeWidth} fill="transparent" />
-          {data.map((cat, idx) => {
-            const percentage = totalFilteredSpend > 0 ? (cat.amount / totalFilteredSpend) : 0;
+          <Circle cx="55" cy="55" r={radius} stroke={isDark ? '#1e293b' : '#EAEAEA'} strokeWidth={strokeWidth} fill="transparent" />
+          {chartData.map((cat, idx) => {
+            const percentage = totalWeight > 0 ? (cat.amount / totalWeight) : 0;
             const strokeDashoffset = circumference - percentage * circumference;
             const rotation = (accumulatedAngle * 360) / circumference - 90;
             accumulatedAngle += percentage * circumference;
@@ -268,7 +292,7 @@ export default function Dashboard() {
                 cx="55"
                 cy="55"
                 r={radius}
-                stroke={cat.color}
+                stroke={isZeroState ? `${cat.color}66` : cat.color}
                 strokeWidth={strokeWidth}
                 fill="transparent"
                 strokeDasharray={circumference}
@@ -279,7 +303,7 @@ export default function Dashboard() {
           })}
         </Svg>
         <View style={styles.chartLegend}>
-          {data.slice(0, 4).map((cat, idx) => (
+          {chartData.slice(0, 4).map((cat, idx) => (
             <View key={idx} style={styles.legendItem}>
               <View style={[styles.legendIndicator, { backgroundColor: cat.color }]} />
               <Text style={[styles.legendText, { color: colors.text }]} numberOfLines={1}>
@@ -358,7 +382,7 @@ export default function Dashboard() {
             {expenseHelpers.getCurrencySymbol(settings.currency)}
             {activeSpend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
-          {getFilteredExpensesForActiveTab().length > 0 && renderMiniCategoryChart()}
+          {renderMiniCategoryChart()}
         </Card>
       </View>
 
