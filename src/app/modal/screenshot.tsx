@@ -9,6 +9,8 @@ import {
   Alert,
   TextInput,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter, useNavigation } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -88,8 +90,9 @@ export default function ScreenshotModal() {
       const detectedPreset = presetName || 'gpay_upi';
       const ocrResult = await ocrService.extractReceipt(imageUri, detectedPreset);
       
-      // 2. Run AI Categorization on merchant name
-      const categoryResult = await aiService.classifyExpense(ocrResult.merchant);
+      // 2. Run AI Categorization on merchant name and items
+      const itemsText = ocrResult.items.map((it) => it.name).join(' ');
+      const categoryResult = await aiService.classifyExpense(ocrResult.merchant, itemsText);
 
       setResult(ocrResult);
       setMerchant(ocrResult.merchant);
@@ -145,7 +148,15 @@ export default function ScreenshotModal() {
         showBackButton={true}
         onBackPress={() => router.back()}
       />
-      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <ScrollView 
+          style={[styles.container, { backgroundColor: colors.background }]}
+          keyboardShouldPersistTaps="handled"
+        >
         {!imageUri && !isScanning ? (
           <View style={styles.pickerBox}>
             <View style={[styles.phoneIconBg, { backgroundColor: colors.primaryLight }]}>
@@ -348,6 +359,7 @@ export default function ScreenshotModal() {
       )}
         <View style={{ height: 40 }} />
       </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

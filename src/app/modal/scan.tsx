@@ -9,6 +9,8 @@ import {
   TextInput,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Camera, CameraView } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -174,8 +176,9 @@ export default function OCRScanModal() {
       // 1. Run OCR
       const result = await ocrService.extractReceipt(photoUri, presetName);
       
-      // 2. Run AI Categorization on merchant name
-      const categoryResult = await aiService.classifyExpense(result.merchant);
+      // 2. Run AI Categorization on merchant name and item names
+      const itemsText = result.items.map((it) => it.name).join(' ');
+      const categoryResult = await aiService.classifyExpense(result.merchant, itemsText);
 
       setOcrResult(result);
       setMerchant(result.merchant);
@@ -389,7 +392,15 @@ export default function OCRScanModal() {
         showBackButton={true}
         onBackPress={() => router.back()}
       />
-      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <ScrollView 
+          style={[styles.container, { backgroundColor: colors.background }]}
+          keyboardShouldPersistTaps="handled"
+        >
       {!photoUri && !isScanning ? (
         <View style={styles.cameraBox}>
           {Device.isDevice ? (
@@ -618,7 +629,8 @@ export default function OCRScanModal() {
         )
       )}
       <View style={{ height: 40 }} />
-    </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
