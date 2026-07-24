@@ -578,9 +578,9 @@ export default function SettingsScreen() {
         </SettingsCard>
 
         {/* Danger Zone: Sign Out */}
-        <SignOutButton onPress={handleLogout} />
-        
-        <View style={{ height: 40 }} />
+        <View style={{ marginTop: 24 }}>
+          <SignOutButton onPress={handleLogout} />
+        </View>
       </ScrollView>
     </View>
   );
@@ -595,7 +595,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 16,
+    flexGrow: 1,
   },
   divider: {
     height: 1,
