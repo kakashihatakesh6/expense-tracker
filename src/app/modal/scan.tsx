@@ -11,8 +11,10 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import { Camera, CameraView } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import * as Device from 'expo-device';
 import { useRouter, useNavigation } from 'expo-router';
@@ -44,8 +46,44 @@ export default function OCRScanModal() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [presetName, setPresetName] = useState<string | undefined>(undefined);
   const [isScanning, setIsScanning] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
+
+  // Animation values
+  const shutterScale = useRef(new Animated.Value(1)).current;
+  const blinkOpacity = useRef(new Animated.Value(0)).current;
+
+  const triggerShutterPressAnimation = () => {
+    Animated.sequence([
+      Animated.timing(shutterScale, {
+        toValue: 0.82,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shutterScale, {
+        toValue: 1,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const triggerShutterBlink = () => {
+    blinkOpacity.setValue(0);
+    Animated.sequence([
+      Animated.timing(blinkOpacity, {
+        toValue: 0.85,
+        duration: 60,
+        useNativeDriver: true,
+      }),
+      Animated.timing(blinkOpacity, {
+        toValue: 0,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   // Editable preview values
   const [merchant, setMerchant] = useState('');
@@ -95,25 +133,45 @@ export default function OCRScanModal() {
   }, []);
 
   const capturePhoto = async (demoPreset?: string) => {
+    // 1. Immediately trigger haptic click feedback for native tactile feel
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {
+      // Non-fatal if device doesn't support haptics
+    }
+
+    // 2. Fire button press shrink-grow animation and screen shutter blink overlay
+    triggerShutterPressAnimation();
+    triggerShutterBlink();
+
+    // 3. Mark state as capturing immediately to block further clicks
+    setIsCapturing(true);
+
     if (demoPreset) {
+      // Simulate brief delay for mock selection
+      await new Promise((resolve) => setTimeout(resolve, 300));
       setPhotoUri(`mock_${demoPreset}.jpg`);
       setPresetName(demoPreset);
+      setIsCapturing(false);
       return;
     }
 
     if (!Device.isDevice) {
-      // Simulation Mode: pick random preset
+      // Simulation Mode: pick random preset after a quick delay
+      await new Promise((resolve) => setTimeout(resolve, 400));
       const presets = ['starbucks', 'walmart', 'shell', 'amazon', 'vmart'];
       const randomPreset = presets[Math.floor(Math.random() * presets.length)];
       setPhotoUri(`mock_${randomPreset}.jpg`);
       setPresetName(randomPreset);
+      setIsCapturing(false);
       return;
     }
 
     if (cameraRef.current) {
       try {
-        // Give camera hardware a small delay to stabilize/focus
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Give camera hardware a slightly smaller stabilized focus delay
+        // Having animations and spinner active makes this delay feel smooth rather than frozen.
+        await new Promise((resolve) => setTimeout(resolve, 250));
         const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
         setPhotoUri(photo.uri);
         setPresetName(undefined);
@@ -128,6 +186,8 @@ export default function OCRScanModal() {
             { text: 'Open Gallery', onPress: () => pickFromGallery() }
           ]
         );
+      } finally {
+        setIsCapturing(false);
       }
     } else {
       Alert.alert(
@@ -138,6 +198,7 @@ export default function OCRScanModal() {
           { text: 'Use Demo Receipt', onPress: () => capturePhoto('starbucks') }
         ]
       );
+      setIsCapturing(false);
     }
   };
 
@@ -279,12 +340,26 @@ export default function OCRScanModal() {
             </View>
           )}
 
+          {/* Shutter blink overlay for flash feedback */}
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                backgroundColor: '#FFF',
+                opacity: blinkOpacity,
+                zIndex: 15,
+              },
+            ]}
+            pointerEvents="none"
+          />
+
           {/* Viewfinder Header Overlays */}
           <View style={styles.headerControls}>
             <TouchableOpacity 
-              style={styles.headerControlBtn} 
+              style={[styles.headerControlBtn, { opacity: isCapturing ? 0.4 : 1 }]} 
               activeOpacity={0.7}
               onPress={toggleFlash}
+              disabled={isCapturing}
             >
               {flash === 'on' ? (
                 <Zap size={20} color="#34D399" />
@@ -296,9 +371,10 @@ export default function OCRScanModal() {
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={styles.headerControlBtn} 
+              style={[styles.headerControlBtn, { opacity: isCapturing ? 0.4 : 1 }]} 
               activeOpacity={0.7}
               onPress={toggleFacing}
+              disabled={isCapturing}
             >
               <RotateCw size={20} color="#FFF" />
             </TouchableOpacity>
@@ -318,20 +394,35 @@ export default function OCRScanModal() {
 
           {/* Viewfinder Bottom controls (Shutter and Gallery) */}
           <View style={styles.viewfinderBottomRow}>
-            {/* Shutter button centered */}
-            <TouchableOpacity 
-              style={[styles.shutterBtn, { opacity: isCameraReady ? 1 : 0.6 }]} 
-              onPress={() => capturePhoto()}
-              disabled={!isCameraReady}
-              activeOpacity={0.9}
-            >
-              <View style={styles.shutterBtnInner} />
-            </TouchableOpacity>
+            {/* Shutter button centered with Scale animation */}
+            <Animated.View style={{ transform: [{ scale: shutterScale }] }}>
+              <TouchableOpacity 
+                style={[
+                  styles.shutterBtn, 
+                  { 
+                    opacity: (isCameraReady && !isCapturing) ? 1 : 0.6,
+                    borderColor: isCapturing ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.45)',
+                  }
+                ]} 
+                onPress={() => capturePhoto()}
+                disabled={!isCameraReady || isCapturing}
+                activeOpacity={0.9}
+              >
+                {isCapturing ? (
+                  <View style={[styles.shutterBtnInner, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#E2E8F0' }]}>
+                    <ActivityIndicator size="small" color="#0F172A" />
+                  </View>
+                ) : (
+                  <View style={styles.shutterBtnInner} />
+                )}
+              </TouchableOpacity>
+            </Animated.View>
 
             {/* Gallery button on the right */}
             <TouchableOpacity 
-              style={styles.galleryIconBtn} 
+              style={[styles.galleryIconBtn, { opacity: isCapturing ? 0.4 : 1 }]} 
               onPress={pickFromGallery}
+              disabled={isCapturing}
               activeOpacity={0.7}
             >
               <ImageIcon size={20} color="#FFF" />
