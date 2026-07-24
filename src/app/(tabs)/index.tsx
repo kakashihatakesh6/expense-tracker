@@ -45,6 +45,7 @@ import {
 } from 'lucide-react-native';
 import { TransactionCard } from '../../components/transactions/TransactionCard';
 import { TransactionDetailModal } from '../../components/TransactionDetailModal';
+import { UserProfileModal } from '../../components/UserProfileModal';
 import { Expense } from '../../types';
 
 export default function Dashboard() {
@@ -514,136 +515,10 @@ export default function Dashboard() {
       />
 
       {/* User Profile Modal */}
-      <Modal
+      <UserProfileModal
         visible={profileModalVisible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setProfileModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={() => setProfileModalVisible(false)} />
-          <View
-            style={[
-              styles.profileModalContainer,
-              {
-                backgroundColor: colors.background,
-                borderColor: colors.border,
-                shadowColor: isDark ? '#000' : 'rgba(99, 102, 241, 0.15)',
-              },
-            ]}
-          >
-            {/* Header */}
-            <View style={styles.profileModalHeader}>
-              <Text style={[styles.profileModalHeaderTitle, { color: colors.text }]}>User Profile</Text>
-              <TouchableOpacity
-                style={[styles.profileCloseBtn, { backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }]}
-                onPress={() => setProfileModalVisible(false)}
-              >
-                <X size={18} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Profile Info */}
-            <View style={styles.profileHero}>
-              <View style={[styles.profileCommonAvatar, { backgroundColor: colors.primaryLight, borderColor: colors.primary }]}>
-                <User size={38} color={colors.primary} />
-              </View>
-              <Text style={[styles.profileName, { color: colors.text }]}>
-                {user?.user_metadata?.username || user?.email?.split('@')[0] || 'Expense User'}
-              </Text>
-              <View style={[styles.profileBadge, { backgroundColor: colors.primaryLight }]}>
-                <Sparkles size={10} color={colors.primary} style={{ marginRight: 4 }} />
-                <Text style={[styles.profileBadgeText, { color: colors.primary }]}>PRO MEMBER</Text>
-              </View>
-            </View>
-
-            {/* Account Details Box */}
-            <View style={[styles.profileStatsBox, { borderColor: colors.border }]}>
-              <View style={styles.profileStatItem}>
-                <Text style={[styles.profileStatVal, { color: colors.text }]}>{expenses.length}</Text>
-                <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>Expenses</Text>
-              </View>
-              <View style={[styles.profileStatDivider, { backgroundColor: colors.border }]} />
-              <View style={styles.profileStatItem}>
-                <Text style={[styles.profileStatVal, { color: colors.text }]}>
-                  {expenseHelpers.getCurrencySymbol(settings.currency)}{monthlySpend.toFixed(0)}
-                </Text>
-                <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>This Month</Text>
-              </View>
-            </View>
-
-            {/* Menu List */}
-            <View style={styles.profileMenu}>
-              <View style={styles.profileMenuItem}>
-                <View style={[styles.menuItemIconBg, { backgroundColor: colors.primaryLight }]}>
-                  <Mail size={16} color={colors.primary} />
-                </View>
-                <View style={styles.menuItemContent}>
-                  <Text style={[styles.menuItemTitle, { color: colors.textSecondary }]}>Email Address</Text>
-                  <Text style={[styles.menuItemVal, { color: colors.text }]} numberOfLines={1}>{user?.email || 'N/A'}</Text>
-                </View>
-              </View>
-
-              <View style={[styles.profileMenuDivider, { backgroundColor: colors.border }]} />
-
-              <TouchableOpacity
-                style={styles.profileMenuItemInteractive}
-                onPress={() => {
-                  setProfileModalVisible(false);
-                  router.push('/modal/budget');
-                }}
-              >
-                <View style={[styles.menuItemIconBg, { backgroundColor: colors.primaryLight }]}>
-                  <TrendingUp size={16} color={colors.primary} />
-                </View>
-                <Text style={[styles.menuItemInteractiveText, { color: colors.text }]}>Manage Budgets</Text>
-                <ChevronRight size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-
-              <View style={[styles.profileMenuDivider, { backgroundColor: colors.border }]} />
-
-              <TouchableOpacity
-                style={styles.profileMenuItemInteractive}
-                onPress={() => {
-                  setProfileModalVisible(false);
-                  router.push('/(tabs)/settings');
-                }}
-              >
-                <View style={[styles.menuItemIconBg, { backgroundColor: colors.primaryLight }]}>
-                  <User size={16} color={colors.primary} />
-                </View>
-                <Text style={[styles.menuItemInteractiveText, { color: colors.text }]}>Account Preferences</Text>
-                <ChevronRight size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Sign Out Button */}
-            <TouchableOpacity
-              style={[styles.profileLogoutBtn, { backgroundColor: colors.danger }]}
-              onPress={() => {
-                setProfileModalVisible(false);
-                Alert.alert(
-                  'Sign Out',
-                  'Are you sure you want to sign out of your account?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { 
-                      text: 'Sign Out', 
-                      style: 'destructive',
-                      onPress: async () => {
-                        await signOut();
-                      }
-                    }
-                  ]
-                );
-              }}
-            >
-              <LogOut size={16} color="#FFF" style={{ marginRight: 8 }} />
-              <Text style={styles.profileLogoutText}>Sign Out</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setProfileModalVisible(false)}
+      />
     </ScrollView>
     </View>
   );
