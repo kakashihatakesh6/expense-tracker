@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnText: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
     color: '#FF3B30',
   },

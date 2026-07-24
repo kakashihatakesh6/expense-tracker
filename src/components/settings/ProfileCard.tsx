@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   avatarText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
   },
   profileInfo: {
@@ -95,12 +95,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   usernameText: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 4,
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 2,
   },
   emailText: {
-    fontSize: 15,
+    fontSize: 13,
   },
   editBtn: {
     width: 36,

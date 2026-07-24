@@ -8,17 +8,18 @@ interface SectionHeaderProps {
 
 export const SectionHeader: React.FC<SectionHeaderProps> = React.memo(({ title }) => {
   const { colors } = useTheme();
-  return <Text style={[styles.title, { color: colors.text }]}>{title}</Text>;
+  return <Text style={[styles.title, { color: colors.textSecondary }]}>{title}</Text>;
 });
 
 SectionHeader.displayName = 'SectionHeader';
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginTop: 20,
-    marginBottom: 12,
-    letterSpacing: -0.3,
+    fontSize: 12,
+    fontWeight: '800',
+    marginTop: 24,
+    marginBottom: 8,
+    letterSpacing: 1.0,
+    textTransform: 'uppercase',
   },
 });

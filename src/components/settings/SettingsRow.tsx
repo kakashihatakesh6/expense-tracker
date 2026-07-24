@@ -81,11 +81,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   titleText: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   subtitleText: {
-    fontSize: 14,
+    fontSize: 12,
     marginTop: 2,
   },
   rightSection: {
