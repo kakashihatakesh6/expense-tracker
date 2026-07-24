@@ -64,6 +64,7 @@ export default function TabsLayout() {
           fontWeight: '700',
           marginTop: 2,
         },
+        tabBarHideOnKeyboard: true,
       }}
     >
       <Tabs.Screen
