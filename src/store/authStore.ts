@@ -11,6 +11,7 @@ interface AuthState {
   initializeAuth: () => Promise<void>;
   signOut: () => Promise<void>;
   setSession: (session: Session | null) => void;
+  updateProfile: (username: string, avatarUrl?: string, extraMetadata?: Record<string, any>) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -44,6 +45,41 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setSession: (session) => {
     set({ session, user: session?.user || null });
+  },
+
+  updateProfile: async (username: string, avatarUrl?: string, extraMetadata?: Record<string, any>) => {
+    try {
+      // Try to update Supabase if online
+      const { data, error } = await supabase.auth.updateUser({
+        data: { username, avatar_url: avatarUrl, ...extraMetadata }
+      });
+      if (error) {
+        console.warn('Supabase update failed or offline. Updating store state locally.', error);
+      }
+      
+      // Update local state (works even offline/demo mode)
+      set((state) => {
+        const currentUser = state.user || {
+          id: 'mock-user-id',
+          email: 'guest@spendly.ai',
+          user_metadata: {},
+        } as User;
+        
+        return {
+          user: {
+            ...currentUser,
+            user_metadata: {
+              ...currentUser.user_metadata,
+              username,
+              avatar_url: avatarUrl,
+              ...extraMetadata,
+            }
+          }
+        };
+      });
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+    }
   },
 
   signOut: async () => {

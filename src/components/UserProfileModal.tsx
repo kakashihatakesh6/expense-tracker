@@ -8,6 +8,7 @@ import {
   Modal,
   Alert,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useExpenseStore } from '../store/expenseStore';
@@ -25,6 +26,7 @@ import {
   X,
   CreditCard,
   TrendingDown,
+  Shield,
 } from 'lucide-react-native';
 
 interface UserProfileModalProps {
@@ -57,6 +59,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     .slice(0, 2)
     .join('')
     .toUpperCase() || 'US';
+
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const isPro = !!user?.user_metadata?.is_pro;
 
   const handleSignOut = () => {
     onClose();
@@ -115,7 +120,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
           {/* Hero Section */}
           <View style={styles.profileHero}>
-            <View
+            <TouchableOpacity
               style={[
                 styles.avatarContainer,
                 {
@@ -124,28 +129,62 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   shadowColor: colors.primary,
                 },
               ]}
+              onPress={() => {
+                onClose();
+                router.push('/modal/edit-profile');
+              }}
+              activeOpacity={0.8}
             >
-              <Text style={[styles.avatarText, { color: colors.primary }]}>
-                {initials}
-              </Text>
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={{ width: '100%', height: '100%', borderRadius: 43 }} />
+              ) : (
+                <Text style={[styles.avatarText, { color: colors.primary }]}>
+                  {initials}
+                </Text>
+              )}
               <View
                 style={[
                   styles.onlineIndicator,
                   { borderColor: isDark ? '#111827' : '#FFFFFF' },
                 ]}
               />
-            </View>
+            </TouchableOpacity>
 
             <Text style={[styles.profileName, { color: colors.text }]}>
               {username}
             </Text>
+
+            <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
+              {user?.email || ''}
+            </Text>
             
-            <View style={[styles.profileBadge, { backgroundColor: isDark ? 'rgba(99, 102, 241, 0.15)' : '#EEF2F6' }]}>
-              <Sparkles size={11} color={colors.primary} style={{ marginRight: 4 }} />
-              <Text style={[styles.profileBadgeText, { color: colors.primary }]}>
-                PRO SUITE ACTIVE
-              </Text>
-            </View>
+            {isPro ? (
+              <TouchableOpacity
+                style={[styles.profileBadge, { backgroundColor: isDark ? 'rgba(99, 102, 241, 0.15)' : '#EEF2F6' }]}
+                onPress={() => {
+                  onClose();
+                  router.push('/modal/subscription');
+                }}
+              >
+                <Sparkles size={11} color={colors.primary} style={{ marginRight: 4 }} />
+                <Text style={[styles.profileBadgeText, { color: colors.primary }]}>
+                  PRO SUITE ACTIVE
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.profileBadge, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#FEF3C7' }]}
+                onPress={() => {
+                  onClose();
+                  router.push('/modal/subscription');
+                }}
+              >
+                <Sparkles size={11} color="#D97706" style={{ marginRight: 4 }} />
+                <Text style={[styles.profileBadgeText, { color: '#D97706' }]}>
+                  FREE TIER (UPGRADE)
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Premium Quick Stats */}
@@ -180,33 +219,19 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
           {/* Menu Options */}
           <View style={styles.profileMenu}>
-            <View style={[styles.profileMenuItem, { borderBottomColor: isDark ? '#1F293D' : '#F3F4F6' }]}>
-              <View style={[styles.menuItemIconBg, { backgroundColor: isDark ? '#1E1B4B' : '#EEF2F6' }]}>
-                <Mail size={15} color={colors.primary} />
-              </View>
-              <View style={styles.menuItemContent}>
-                <Text style={[styles.menuItemTitle, { color: colors.textSecondary }]}>
-                  Linked Email
-                </Text>
-                <Text style={[styles.menuItemVal, { color: colors.text }]} numberOfLines={1}>
-                  {user?.email || 'No email attached'}
-                </Text>
-              </View>
-            </View>
-
             <TouchableOpacity
               style={[styles.profileMenuItemInteractive, { borderBottomColor: isDark ? '#1F293D' : '#F3F4F6' }]}
               onPress={() => {
                 onClose();
-                router.push('/modal/budget');
+                router.push('/modal/edit-profile');
               }}
               activeOpacity={0.6}
             >
               <View style={[styles.menuItemIconBg, { backgroundColor: isDark ? '#1E1B4B' : '#EEF2F6' }]}>
-                <TrendingUp size={15} color={colors.primary} />
+                <User size={15} color={colors.primary} />
               </View>
               <Text style={[styles.menuItemInteractiveText, { color: colors.text }]}>
-                Budget Configuration
+                Edit Account Profile
               </Text>
               <ChevronRight size={16} color={colors.textSecondary} />
             </TouchableOpacity>
@@ -215,15 +240,15 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               style={styles.profileMenuItemInteractive}
               onPress={() => {
                 onClose();
-                router.push('/(tabs)/settings');
+                router.push('/modal/subscription');
               }}
               activeOpacity={0.6}
             >
               <View style={[styles.menuItemIconBg, { backgroundColor: isDark ? '#1E1B4B' : '#EEF2F6' }]}>
-                <User size={15} color={colors.primary} />
+                <CreditCard size={15} color={colors.primary} />
               </View>
               <Text style={[styles.menuItemInteractiveText, { color: colors.text }]}>
-                Preferences & Security
+                Plan & Subscription
               </Text>
               <ChevronRight size={16} color={colors.textSecondary} />
             </TouchableOpacity>
@@ -345,7 +370,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '900',
     letterSpacing: -0.2,
-    marginBottom: 8,
+    marginBottom: 4,
+  },
+  profileEmail: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 12,
   },
   profileBadge: {
     flexDirection: 'row',

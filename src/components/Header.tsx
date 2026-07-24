@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   Pressable,
   Platform,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
+import { useAuthStore } from '../store/authStore';
+import { NotificationSidebar } from './NotificationSidebar';
 
 interface HeaderProps {
   title?: string;
@@ -24,6 +27,7 @@ interface HeaderProps {
   onRightPress?: () => void;
   onNotificationPress?: () => void;
   notificationCount?: number;
+  hideRightAction?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -36,14 +40,26 @@ export const Header: React.FC<HeaderProps> = ({
   rightIcon,
   onRightPress,
   onNotificationPress,
-  notificationCount = 0,
+  notificationCount = 2, // Default to showing a notification badge to look active
+  hideRightAction = false,
 }) => {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+
+  const user = useAuthStore((state) => state.user);
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
+  const initials = username
+    .split(' ')
+    .map((n: string) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'U';
 
   const btnStyle = [
     styles.iconButton,
-    { backgroundColor: isDark ? '#1E293B' : '#F5F5F5' },
+    { backgroundColor: isDark ? '#1E293B' : '#F3F4F6' },
   ];
 
   const renderLeftAction = () => {
@@ -82,9 +98,18 @@ export const Header: React.FC<HeaderProps> = ({
           style={({ pressed }) => [
             ...btnStyle,
             pressed && styles.buttonPressed,
+            { padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: colors.primary },
           ]}
         >
-          <Feather name="menu" size={20} color={colors.text} />
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={{ width: '100%', height: '100%' }} />
+          ) : (
+            <View style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primaryLight }}>
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '800' }}>
+                {initials}
+              </Text>
+            </View>
+          )}
         </Pressable>
       );
     }
@@ -93,6 +118,10 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const renderRightAction = () => {
+    if (hideRightAction) {
+      return <View style={styles.placeholder} />;
+    }
+
     if (rightIcon && onRightPress) {
       return (
         <Pressable
@@ -107,32 +136,23 @@ export const Header: React.FC<HeaderProps> = ({
       );
     }
 
-    if (onNotificationPress) {
-      return (
-        <Pressable
-          onPress={onNotificationPress}
-          style={({ pressed }) => [
-            ...btnStyle,
-            pressed && styles.buttonPressed,
-          ]}
-        >
-          <Feather name="bell" size={20} color={colors.text} />
-          
-          {/* Red Notification Badge */}
-          {notificationCount > 0 && (
-            <View style={styles.badge}>
-              {notificationCount > 9 && (
-                <Text style={styles.badgeText}>
-                  {notificationCount > 99 ? '99+' : notificationCount}
-                </Text>
-              )}
-            </View>
-          )}
-        </Pressable>
-      );
-    }
-
-    return <View style={styles.placeholder} />;
+    // Default notifications bell triggers sliding sidebar
+    return (
+      <Pressable
+        onPress={() => setSidebarVisible(true)}
+        style={({ pressed }) => [
+          ...btnStyle,
+          pressed && styles.buttonPressed,
+        ]}
+      >
+        <Feather name="bell" size={20} color={colors.text} />
+        
+        {/* Glowing Red Notification Badge */}
+        {notificationCount > 0 && (
+          <View style={[styles.badge, { backgroundColor: colors.danger }]} />
+        )}
+      </Pressable>
+    );
   };
 
   return (
@@ -157,6 +177,12 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Action Button */}
       <View style={styles.actionWrapper}>{renderRightAction()}</View>
+
+      {/* Sliding Notification Sidebar */}
+      <NotificationSidebar
+        visible={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
+      />
     </View>
   );
 };
@@ -191,8 +217,8 @@ const styles = StyleSheet.create({
   },
   titleText: {
     fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '900',
     letterSpacing: 2,
     textAlign: 'center',
   },
@@ -219,7 +245,6 @@ const styles = StyleSheet.create({
   },
   buttonPressed: {
     opacity: 0.7,
-    backgroundColor: '#EEEEEE',
   },
   placeholder: {
     width: 40,
@@ -232,13 +257,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#EF4444',
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    display: 'none',
   },
 });

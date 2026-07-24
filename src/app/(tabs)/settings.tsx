@@ -197,7 +197,7 @@ export default function SettingsScreen() {
   }, [settings]);
 
   const email = user?.email || 'guest@example.com';
-  const username = user?.user_metadata?.full_name || email.split('@')[0].toUpperCase();
+  const username = user?.user_metadata?.username || user?.user_metadata?.full_name || email.split('@')[0].toUpperCase();
 
   // Dynamic Theme Helpers
   const dividerStyle = [styles.divider, { backgroundColor: colors.border }];
@@ -231,9 +231,9 @@ export default function SettingsScreen() {
             <ProfileCard
               email={email}
               username={username}
-              onEditPress={() => Alert.alert('Edit Profile', 'Profile edit screen is coming soon!')}
-              onSubscriptionPress={() => Alert.alert('Subscriptions', 'Your account is on the Free Tier.')}
-              onSecurityPress={() => Alert.alert('Security', 'Your connection to Supabase cloud is secure.')}
+              onEditPress={() => router.push('/modal/edit-profile')}
+              onSubscriptionPress={() => router.push('/modal/subscription')}
+              onSecurityPress={() => router.push('/modal/security')}
               colors={colors}
             />
           </>
