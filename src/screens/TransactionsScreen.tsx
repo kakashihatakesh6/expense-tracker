@@ -7,26 +7,54 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  TextInput,
 } from 'react-native';
 
 import { useRouter, useNavigation } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { useExpenseStore } from '../store/expenseStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useTheme } from '../hooks/useTheme';
 import { useCurrencyStore } from '../store/currencyStore';
 import { expenseHelpers } from '../utils/expenseHelpers';
 import { Header } from '../components/Header';
-import { SearchBar } from '../components/transactions/SearchBar';
-import { TransactionFilters } from '../components/transactions/TransactionFilters';
 import { MonthlySummaryCard } from '../components/transactions/MonthlySummaryCard';
 import { TransactionCard } from '../components/transactions/TransactionCard';
 import { Skeleton } from '../components/Skeleton';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Edit2, Trash2, Plus } from 'lucide-react-native';
 import { TransactionDetailModal } from '../components/TransactionDetailModal';
-import Animated, { FadeInDown, SlideInUp } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, SlideInUp, FadeOut } from 'react-native-reanimated';
 import { Expense } from '../types';
+
+const CATEGORY_STYLES: Record<string, { bg: string; color: string; icon: string }> = {
+  shopping: { bg: '#FFE5EC', color: '#FF6B81', icon: 'shopping-bag' },
+  travel: { bg: '#E8F1F5', color: '#35B6D5', icon: 'compass' },
+  bills: { bg: '#F0E6FF', color: '#8E7CF3', icon: 'file-text' },
+  food: { bg: '#FFF3CD', color: '#FFB648', icon: 'coffee' },
+  salary: { bg: '#E8F5E9', color: '#34C759', icon: 'dollar-sign' },
+  transport: { bg: '#E0F7FA', color: '#35B6D5', icon: 'truck' },
+  entertainment: { bg: '#FFFDE7', color: '#FFB648', icon: 'film' },
+  all: { bg: '#EEF2FF', color: '#6366F1', icon: 'grid' },
+  default: { bg: '#F3F4F6', color: '#6B7280', icon: 'tag' },
+};
+
+const getCategoryStyle = (category: string) => {
+  const norm = (category || '').toLowerCase();
+  if (norm === 'all') return CATEGORY_STYLES.all;
+  if (norm.includes('shop') || norm.includes('cloth')) return CATEGORY_STYLES.shopping;
+  if (norm.includes('travel') || norm.includes('flight') || norm.includes('trip') || norm.includes('cab') || norm.includes('taxi')) return CATEGORY_STYLES.travel;
+  if (norm.includes('bill') || norm.includes('utility') || norm.includes('rent') || norm.includes('insurance')) return CATEGORY_STYLES.bills;
+  if (norm.includes('food') || norm.includes('dine') || norm.includes('cafe') || norm.includes('eat') || norm.includes('grocer')) return CATEGORY_STYLES.food;
+  if (norm.includes('salary') || norm.includes('income') || norm.includes('earn')) return CATEGORY_STYLES.salary;
+  if (norm.includes('transport') || norm.includes('car') || norm.includes('fuel')) return CATEGORY_STYLES.transport;
+  if (norm.includes('entertain') || norm.includes('movie') || norm.includes('show') || norm.includes('game') || norm.includes('music')) return CATEGORY_STYLES.entertainment;
+  return CATEGORY_STYLES.default;
+};
+
+const getCategoryIcon = (category: string): string => {
+  return getCategoryStyle(category).icon;
+};
 
 export const TransactionsScreen = () => {
   const router = useRouter();
@@ -94,20 +122,7 @@ export const TransactionsScreen = () => {
     return expenseHelpers.getCurrencySymbol(settings.currency);
   }, [settings.currency]);
 
-  const selectedSortLabel = useMemo(() => {
-    switch (sortBy) {
-      case 'date-desc':
-        return 'Date: Newest';
-      case 'date-asc':
-        return 'Date: Oldest';
-      case 'amount-desc':
-        return 'Amount: High-Low';
-      case 'amount-asc':
-        return 'Amount: Low-High';
-      default:
-        return 'Sort Date';
-    }
-  }, [sortBy]);
+
 
   const filteredAndSortedExpenses = useMemo(() => {
     return expenses
@@ -183,7 +198,6 @@ export const TransactionsScreen = () => {
 
   const handleSelectCategory = useCallback((catName: string | null) => {
     setSelectedCategory(catName);
-    setShowCategoryPills(false);
   }, []);
 
   const toggleSortOptions = useCallback(() => {
@@ -201,79 +215,134 @@ export const TransactionsScreen = () => {
   const renderCategoryDropdown = () => {
     if (!showCategoryPills) return null;
     return (
-      <View style={[styles.dropdownContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <Animated.View 
+        entering={FadeInDown.duration(220)}
+        exiting={FadeOut.duration(180)}
+        style={[
+          styles.dropdownContainer, 
+          { backgroundColor: colors.card, borderBottomColor: colors.border }
+        ]}
+      >
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
           data={[{ id: 'all', name: 'All' }, ...categories]}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.categoryScroll}
-          renderItem={({ item }) => {
+          renderItem={({ item, index }) => {
             const isSelected = item.name === 'All' ? selectedCategory === null : selectedCategory === item.name;
+            const styleInfo = getCategoryStyle(item.name);
+            const displayColor = isDark ? '#818CF8' : styleInfo.color;
+            const displayBg = isDark ? '#1E293B' : styleInfo.bg;
+
             return (
-              <TouchableOpacity
-                style={[
-                  styles.categoryPill,
-                  {
-                    backgroundColor: isSelected ? colors.primary : colors.card,
-                    borderColor: isSelected ? colors.primary : colors.border,
-                  },
-                ]}
-                onPress={() => handleSelectCategory(item.name === 'All' ? null : item.name)}
-                activeOpacity={0.8}
-              >
-                <Text
+              <Animated.View entering={FadeIn.duration(200).delay(index * 25)}>
+                <TouchableOpacity
                   style={[
-                    styles.categoryPillText,
-                    { color: isSelected ? '#FFFFFF' : colors.text },
+                    styles.categoryCard,
+                    {
+                      backgroundColor: isSelected ? colors.primary : colors.card,
+                      borderColor: isSelected ? colors.primary : colors.border,
+                      shadowColor: isSelected ? colors.primary : '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: isSelected ? 0.2 : 0,
+                      shadowRadius: 4,
+                      elevation: isSelected ? 3 : 0,
+                    },
                   ]}
+                  onPress={() => handleSelectCategory(item.name === 'All' ? null : item.name)}
+                  activeOpacity={0.8}
                 >
-                  {item.name}
-                </Text>
-              </TouchableOpacity>
+                  <View 
+                    style={[
+                      styles.categoryIconBadge, 
+                      { backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : displayBg }
+                    ]}
+                  >
+                    <Feather 
+                      name={styleInfo.icon as any} 
+                      size={13} 
+                      color={isSelected ? '#FFFFFF' : displayColor} 
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      styles.categoryCardText,
+                      { color: isSelected ? '#FFFFFF' : colors.text },
+                    ]}
+                  >
+                    {item.name}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
             );
           }}
         />
-      </View>
+      </Animated.View>
     );
   };
 
   const renderSortDropdown = () => {
     if (!showSortOptions) return null;
     return (
-      <View style={[styles.dropdownContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <Animated.View 
+        entering={FadeInDown.duration(220)}
+        exiting={FadeOut.duration(180)}
+        style={[
+          styles.dropdownContainer, 
+          { backgroundColor: colors.card, borderBottomColor: colors.border }
+        ]}
+      >
         <View style={styles.sortOptionsGrid}>
           {[
-            { label: 'Date: Newest', value: 'date-desc' },
-            { label: 'Date: Oldest', value: 'date-asc' },
-            { label: 'Amount: High to Low', value: 'amount-desc' },
-            { label: 'Amount: Low to High', value: 'amount-asc' },
-          ].map((opt) => (
-            <TouchableOpacity
-              key={opt.value}
-              style={[
-                styles.sortOptItem,
-                { backgroundColor: isDark ? '#1E293B' : '#F5F5F7' },
-                sortBy === opt.value && { backgroundColor: colors.primaryLight },
-              ]}
-              onPress={() => {
-                setSortBy(opt.value as any);
-                setShowSortOptions(false);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.sortOptText,
-                  { color: sortBy === opt.value ? colors.primary : colors.text },
-                ]}
-              >
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+            { label: 'Date: Newest', value: 'date-desc', icon: 'arrow-down' },
+            { label: 'Date: Oldest', value: 'date-asc', icon: 'arrow-up' },
+            { label: 'Amount: High to Low', value: 'amount-desc', icon: 'trending-down' },
+            { label: 'Amount: Low to High', value: 'amount-asc', icon: 'trending-up' },
+          ].map((opt, index) => {
+            const isSelected = sortBy === opt.value;
+            return (
+              <Animated.View key={opt.value} entering={FadeIn.duration(200).delay(index * 25)}>
+                <TouchableOpacity
+                  style={[
+                    styles.sortOptItem,
+                    { 
+                      backgroundColor: isSelected ? colors.primary : (isDark ? '#1E293B' : '#F5F5F7'),
+                      borderColor: isSelected ? colors.primary : colors.border,
+                      borderWidth: 1,
+                      shadowColor: isSelected ? colors.primary : '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: isSelected ? 0.15 : 0,
+                      shadowRadius: 3,
+                      elevation: isSelected ? 2 : 0,
+                    }
+                  ]}
+                  onPress={() => {
+                    setSortBy(opt.value as any);
+                    setShowSortOptions(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Feather 
+                    name={opt.icon as any} 
+                    size={14} 
+                    color={isSelected ? '#FFFFFF' : colors.textSecondary} 
+                    style={{ marginRight: 6 }} 
+                  />
+                  <Text
+                    style={[
+                      styles.sortOptText,
+                      { color: isSelected ? '#FFFFFF' : colors.text },
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          })}
         </View>
-      </View>
+      </Animated.View>
     );
   };
 
@@ -303,15 +372,74 @@ export const TransactionsScreen = () => {
           onRightPress={toggleSortOptions}
         />
 
-        <Animated.View entering={SlideInUp.duration(400)}>
-          <SearchBar value={search} onChangeText={setSearch} />
-          
-          <TransactionFilters
-            onDatePress={toggleSortOptions}
-            onCategoryPress={toggleCategoryPills}
-            selectedCategory={selectedCategory}
-            selectedSortLabel={selectedSortLabel}
-          />
+        <Animated.View entering={SlideInUp.duration(400)} style={styles.searchFilterRow}>
+          {/* Unified search input in the row */}
+          <View style={[styles.searchContainer, { backgroundColor: isDark ? '#1E293B' : '#F5F5F7' }]}>
+            <Ionicons name="search-outline" size={18} color={colors.textSecondary} style={styles.searchIcon} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search transactions..."
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="none"
+              autoCorrect={false}
+              accessibilityLabel="Search transactions input"
+            />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch('')} style={styles.clearSearchBtn}>
+                <Ionicons name="close-circle" size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Category Trigger Button with dynamic style */}
+          <TouchableOpacity
+            style={[
+              styles.iconFilterBtn,
+              { 
+                backgroundColor: selectedCategory ? colors.primaryLight : (isDark ? '#1E293B' : '#F5F5F7'),
+                borderColor: selectedCategory ? colors.primary : 'transparent',
+                borderWidth: selectedCategory ? 1 : 0
+              }
+            ]}
+            onPress={toggleCategoryPills}
+            activeOpacity={0.7}
+            accessibilityLabel="Filter by category trigger"
+          >
+            <Feather 
+              name={selectedCategory ? (getCategoryIcon(selectedCategory) as any) : "tag"} 
+              size={18} 
+              color={selectedCategory ? colors.primary : colors.textSecondary} 
+            />
+            {selectedCategory && (
+              <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
+            )}
+          </TouchableOpacity>
+
+          {/* Sort Option Trigger Button */}
+          <TouchableOpacity
+            style={[
+              styles.iconFilterBtn,
+              { 
+                backgroundColor: sortBy !== 'date-desc' ? colors.primaryLight : (isDark ? '#1E293B' : '#F5F5F7'),
+                borderColor: sortBy !== 'date-desc' ? colors.primary : 'transparent',
+                borderWidth: sortBy !== 'date-desc' ? 1 : 0
+              }
+            ]}
+            onPress={toggleSortOptions}
+            activeOpacity={0.7}
+            accessibilityLabel="Sort options trigger"
+          >
+            <Feather 
+              name="sliders" 
+              size={18} 
+              color={sortBy !== 'date-desc' ? colors.primary : colors.textSecondary} 
+            />
+            {sortBy !== 'date-desc' && (
+              <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
+            )}
+          </TouchableOpacity>
         </Animated.View>
 
         {renderSortDropdown()}
@@ -392,6 +520,49 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  searchFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginTop: 12,
+    gap: 8,
+  },
+  searchContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    height: 46,
+    paddingHorizontal: 12,
+  },
+  searchIcon: {
+    marginRight: 6,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    height: '100%',
+    padding: 0,
+  },
+  clearSearchBtn: {
+    padding: 4,
+  },
+  iconFilterBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  activeDot: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
   dropdownContainer: {
     borderBottomWidth: 1,
     paddingVertical: 12,
@@ -399,17 +570,27 @@ const styles = StyleSheet.create({
   },
   categoryScroll: {
     paddingHorizontal: 16,
+  },
+  categoryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginRight: 8,
     gap: 8,
   },
-  categoryPill: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
+  categoryIconBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  categoryPillText: {
-    fontSize: 14,
-    fontWeight: '600',
+  categoryCardText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   sortOptionsGrid: {
     flexDirection: 'row',
@@ -418,14 +599,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   sortOptItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     borderRadius: 14,
-    backgroundColor: '#F5F5F7',
+    borderWidth: 1,
   },
   sortOptText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   listContainer: {
     flex: 1,
